@@ -7,7 +7,6 @@
 ;   This file contains an simple "Hello World" bootloader written in the NASM assembler.
 ;   It is able to print the hello world characters to the screen.
 ;
-
 bits    16          ; Tell NASM this is 16 bit code.
 org     0x7C00      ; tell MASM to start outputting stuff at ofset 0x7c00
 boot:
