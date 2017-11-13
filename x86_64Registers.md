@@ -99,32 +99,26 @@ _Used in I/O operations and in combination with the accumilator registers for mu
 ####Instruction Pointer Registers
 _Used to store the offset address of the next instruction to be executed_
 
-|**Register**|**Name**                | **Description**                                            |
-|-----------:|-----------------------:|-----------------------------------------------------------:|
-|   DH       | Data High Byte Register| The high byte of the 16 bit data register                  |
-|   BL       | Data Low Byte Register | The low byte of the 16 bit data register                   |
-|   BX       | Data Register          | The combined high and low byte of the 16 bit data register |
-|   EBX      | Extenden Data Register | The extended 32 bit data register                          |
+|**Register**|**Bits**|**Name**                               | 
+|-----------:|-------:|--------------------------------------:|
+|   IP       | 16     | Instruction Pointer Register          |
+|   EIP      | 32     | Extended Instruction Pointer Register |
 
 ####Stack Pointer Registers
 _Used to store the offset address of the stack_
 
-|**Register**|**Name**                | **Description**                                            |
-|-----------:|-----------------------:|-----------------------------------------------------------:|
-|   DH       | Data High Byte Register| The high byte of the 16 bit data register                  |
-|   BL       | Data Low Byte Register | The low byte of the 16 bit data register                   |
-|   BX       | Data Register          | The combined high and low byte of the 16 bit data register |
-|   EBX      | Extenden Data Register | The extended 32 bit data register                          |
+|**Register**|**Bits**|**Name**                        |
+|-----------:|-------:|-------------------------------:|
+|   SP       | 16     | Stack Pointer Register         | 
+|   ESP      | 32     | Extended Stack Pointer Register| 
 
 ####Base Pointer Registers
 _Used in making references to parameters that are passed in subroutines_
 
-|**Register**|**Name**                | **Description**                                            |
-|-----------:|-----------------------:|-----------------------------------------------------------:|
-|   DH       | Data High Byte Register| The high byte of the 16 bit data register                  |
-|   BL       | Data Low Byte Register | The low byte of the 16 bit data register                   |
-|   BX       | Data Register          | The combined high and low byte of the 16 bit data register |
-|   EBX      | Extenden Data Register | The extended 32 bit data register                          |
+|**Register**|**Bits**|**Name**                        |
+|-----------:|-------:|-------------------------------:|
+|   BP       | 16     | Base Pointer Register          |
+|   EBP       | 32    | Extended Base Pointer Register |
 
 ## Control Registers
 _These registers are used to configure modes on the cpu (Setting Flags) to alter its behaviour_
@@ -143,4 +137,47 @@ _These registers are used to configure modes on the cpu (Setting Flags) to alter
 
 ## Index Registers
 
+###Source Index Registers
+_Used as an source index for string operations_
+
+|**Register**|**Bits**|**Name**                        |
+|-----------:|-------:|-------------------------------:|
+|   SI       | 16     | Source Index Register          | 
+|   ESI      | 32     | Extended Source Index Register | 
+
+####Destination Index Registers
+_Used as destination index for string operations_
+
+|**Register**|**Bits**|**Name**                            |
+|-----------:|-------:|-----------------------------------:|
+|   DI       | 16     | Destination Index Register         |
+|   EDI      | 32     | Extended Destination Index Register |
+
+
+## Segment Registers
+
+####Code Segment Registers
+_This contains all the instructions to be executed_
+
+|**Register**|**Bits**|**Name**                               | 
+|-----------:|-------:|--------------------------------------:|
+|   CS      | 16     | Code Segment Register                  |
+|   ECS     | 32     | Extended Code Segment Register         |
+
+####Data Segment Registers
+_This contains data, constants and work ares_
+
+|**Register**|**Bits**|**Name**                        |
+|-----------:|-------:|-------------------------------:|
+|   DS       | 16     | Data segment Register          | 
+|   EDS      | 32     | Extended Data segment Register | 
  
+####Stack Segment Registers
+_This contains data and return addresses of subroutines, procederes. It is implemented as an stack
+data structure_
+
+|**Register**|**Bits**|**Name**                        |
+|-----------:|-------:|-------------------------------:|
+|   SS      | 16     | Stack Segment Register          |
+|   ESS      | 32    | Extended Stack Segment Register |
+
