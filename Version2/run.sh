@@ -7,4 +7,4 @@ nasm -f bin bootloader.asm -o bootloader.bin
 hexdump bootloader.bin
 
 # run the created bootloader
-qemu-system-x86_64 -fda bootloader.bin
+qemu-system-x86_64 -fda bootloader.bin -boot a -no-fd-bootchk
