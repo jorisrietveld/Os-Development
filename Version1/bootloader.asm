@@ -27,19 +27,20 @@ boot:
     mov ah, 0x0E    ; Set accumilator register to 0x0E (Ascii controll code: Shift Out, SO).
 
 ; For each character in "Hello World!"
-loop:
+.loop:
     lodsb           ; Load byte from the data segment register into accumilator low byte register.
     or  al, al      ; Is the value in the accumilator low byte register equal to zero ?
-    jz  halt        ; Yes (zero flag is set after arithmetic operation), jump to halt (stop executing).
+    jz halt         ; Yes (zero flag is set after arithmetic operation), jump to halt (stop executing).
     int 0x10        ; Call set video mode BIOS interrupt.
     jmp .loop       ; Jump back to the start of the loop.
 
-; Initialize output string.
-hello:
-    db "Hello World!", 0    ; Define byes representing the string hello world.
+; Halt the CPU
+halt:
+    cli ; clear the interrupt flag in the controll register.
+    hlt ; Halt the processor from executing.
 
-
+; Initialize output buffer.
+hello: db "Hello World!", 0    ; Define byes representing the string hello world.
 times 510 - ($-$$) db 0     ; Fill remaining 510 bytes of MBR with zeros to prevent unexpeced behaveour.
-
 
 dw 0xAA55 ; Mark this sector (the 512 bytes used in the bootleader) as bootable with the magic constand.
