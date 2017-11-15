@@ -133,12 +133,12 @@ read_string_func: ; Read key presses from the user.
     mov al, 0       ; Set an null terminator to the register.
     stosb           ; Append the terminator to the end of the string.
 
-    mov ah, 0x0E    ;
-    mov al, 0x0D    ;
+    mov ah, 0x0E    ; Reset accumulator high byte.
+    mov al, 0x0D    ; Reset accumulator high byte.
     int 0x10
     mov al, 0x0A    ; Set an newline character to the register.
     int 0x10        ; Insert the newline character
-    .return: ret    ; Back to main routine.
+    ret             ; Return to main routine.
 
 ;=========================================================================[ STRING COMPARE ROUTINE ]=-
 string_compare:;Compare strings in source and data register
@@ -146,22 +146,22 @@ string_compare:;Compare strings in source and data register
     mov al, [si]    ; Load an byte from the source index register.
     mov bl, [di]    ; Load an byte from the data index register.
     cmp al, bl      ; Compare the 2 registers, are they different?
-    jne .false      ; Then call not equal to set the cary flag to false.
+    jne .return_false; Then call not equal to set the cary flag to false.
 
     cmp al, 0       ; are both byes null?
-    je .true        ; Then we're done comparing the strings.
+    je .return_true ; Then we're done comparing the strings.
 
     inc di          ; Increment the data index
     inc si          ; Increment the source index
     jmp .compare    ; Go to the next character to compare in the string.
 
-.false:
+.return_false:
     clc             ; The strings are not the same, set the cary flag to false.
-    .return: ret    ; Back to main routine.
+    ret             ; return to main routine.
 
-.true:
+.return_true:
     stc             ; The strings are the same, set the cary flag to true.
-    .return: ret    ; Back to main routine.
+    ret             ; return to main routine.
 
 times 510-($-$$) db 0 ; fill the rest of the sector with the amount of money on my bank account.
 dw 0xAA55 ; Mark this sector (the 512 bytes used in the bootloader) as bootable with black magic.
