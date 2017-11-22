@@ -12,14 +12,14 @@ read_string: ; Read key presses from the user.
     cmp al, 0x0D    ; Enter pressed?
     je .enter_key   ; Were done reading input. go back to the main routine.
 
-    cmp cl, 0x0A    ; Are there 63 characters in the I/O input?
+    cmp cl, 0x0A    ; Are there 10 characters in the I/O input?
     je .loop        ; Then only allow backspaces or enters
 
     mov ah, 0x0E    ;
     int 0x10        ; Print the entered character to the screen
 
     stosb           ; Put the character in the buffer
-    inc cl          ;
+    inc cl          ; increment counter
     jmp .loop       ;
 
 ;================================================================================[ BACKSPACE EVENT ]=-

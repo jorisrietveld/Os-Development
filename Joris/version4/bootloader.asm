@@ -16,8 +16,15 @@ initaite:; Initiate the program
     mov ss, ax              ; Initiate stack segment register with 0.
     mov sp, 0x7C00          ; Point the top of the stack at address 0x7C00.
 
+    mov si, HEADER1_STR      ; Fetch header string into the segment index register.
+    call print_string       ; Print the register content to the screen.
+
     mov si, HEADER_STR      ; Fetch header string into the segment index register.
     call print_string       ; Print the register content to the screen.
+
+    mov si, HEADER1_STR      ; Fetch header string into the segment index register.
+    call print_string       ; Print the register content to the screen.
+
     mov si, MENU_OPT1_STR   ; Fetch menu option 1 string into the segment index register.
     call print_string       ; Print the register content to the screen.
     mov si, MENU_OPT2_STR   ; Fetch menu option 2 string into the segment index register.
@@ -82,6 +89,7 @@ main_routine:
 ; The 0x0D means carriage ret in ascii ( Go back to start of line )
 ; The 0x0A means line feed in ascii ( Scroll down )
 ; The 0x00 means NULL in ascii (string terminator)
+HEADER1_STR db '========================================', 0x0D, 0x0A, 0x00
 HEADER_STR db '-------------{ STENDEX OS }-------------', 0x0D, 0x0A, 0x00
 MENU_OPT1_STR db '[1] - Boot stendex kernel',0x0D, 0x0A, 0x00
 MENU_OPT2_STR db '[2] - Shutdown the computter',0x0D, 0x0A,  0x00
