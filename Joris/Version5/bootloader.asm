@@ -11,7 +11,7 @@ bits    16          ; Output 16 bits instructions for CPU real mode.
 org     0x7C00      ; Start output after interrupt vectors.
 
 boot:
-	mov ax, 0x2401
+	mov ax, 0x2401  ;
 	int 0x15
 	mov ax, 0x3
 	int 0x10
@@ -46,7 +46,7 @@ gdt_pointer:
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
 
-%include "bootloader.asm"
+%include "stage_two_bootloader.asm"
 
 times 510 - ($-$$) db 0     ; Fill remaining 510 bytes of MBR with zeros to prevent unexpeced behaveour.
 dw 0xAA55 ; Mark this sector (the 512 bytes used in the bootleader) as bootable with the magic constand.
