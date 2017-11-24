@@ -8,7 +8,7 @@ hexdump bootloader.bin
 # run the created bootloader
 qemu-system-i386 -s -S -fda bootloader.bin
 
-# gdb -x debug.gdb
+# gdb -x debug3.gdb
 
 #gdb target remote localhost:1234 set architecture i8086 display /i ($cs*16)+$pc stepi
 #add-symbol-file bootloader.bin 0x7c00

@@ -13,7 +13,10 @@ bootloader.img: bootloader.asm Makefile
 	nasm -f bin bootloader.asm -o bootloader.img
 
 run: bootloader.img
-	@qemu-system-i386 -s -S -drive file=bootloader.img,index=0,media=disk,format=raw
+	@qemu-system-i386 -drive file=bootloader.img,index=0,media=disk,format=raw
+
+debug: bootloader.img
+	@qemu-system-i386 -s -S -drive file=bootloader.img,index=0,media=disk,format=raw & gdb -q -x debug.gdb
 
 clean:
 	rm -f bootloader.img
