@@ -1,6 +1,6 @@
 # An cheatsheed for rembering the X86-64 registers
 
-###GPR General Purpose Registers - 16 bit
+### GPR General Purpose Registers - 16 bit
 
 |**Register**|**Name**|**Description**|
 |-----------:|-------:|--------------:|
@@ -54,7 +54,7 @@ is build up from 2 registers each 1 byte long. They are the registers with the H
 
 ## Data registers 
 
-####Accumilator Registers
+#### Accumilator Registers
 _Used for I/O port access, arithmetic and interrupt calls_
 
 |**Register**|**Name**                        | **Description**                                       |
@@ -64,7 +64,7 @@ _Used for I/O port access, arithmetic and interrupt calls_
 |   AX       | Accumulator Register           | The combined high and low byte of the 16 bit register |
 |   EAX      | Extended Accumulator Register  | The extended 32 bit accumulator register              |
 
-####Base Registers
+#### Base Registers
 _Used for indexing addressing_
 
 |**Register**|**Name**                | **Description**                                           |
@@ -74,7 +74,7 @@ _Used for indexing addressing_
 |   BX       |Base Register           | The combined high and low byte of the 16 bit base register|
 |   EBX      |Extenden Base Register  | The extended 32 bit base register                         |  
 
-####Count Registers   
+#### ount Registers   
 _Used to store the loop count in iterative operations_
 
 |**Register**|**Name**                | **Description**                                             |
@@ -84,7 +84,7 @@ _Used to store the loop count in iterative operations_
 |   CX       |Count Register          | The combined high and low byte of the 16 bit count register |
 |   ECX      |Extenden Count Register | The extended 32 bit count register                          |
 
-####Data Registers
+#### Data Registers
 _Used in I/O operations and in combination with the accumilator registers for multiply and divide operations_
 
 |**Register**|**Name**                | **Description**                                            |
@@ -96,7 +96,7 @@ _Used in I/O operations and in combination with the accumilator registers for mu
 
 ## Pointer Registers
 
-####Instruction Pointer Registers
+#### Instruction Pointer Registers
 _Used to store the offset address of the next instruction to be executed_
 
 |**Register**|**Bits**|**Name**                               | 
@@ -104,7 +104,7 @@ _Used to store the offset address of the next instruction to be executed_
 |   IP       | 16     | Instruction Pointer Register          |
 |   EIP      | 32     | Extended Instruction Pointer Register |
 
-####Stack Pointer Registers
+#### Stack Pointer Registers
 _Used to store the offset address of the stack_
 
 |**Register**|**Bits**|**Name**                        |
@@ -112,7 +112,7 @@ _Used to store the offset address of the stack_
 |   SP       | 16     | Stack Pointer Register         | 
 |   ESP      | 32     | Extended Stack Pointer Register| 
 
-####Base Pointer Registers
+#### Base Pointer Registers
 _Used in making references to parameters that are passed in subroutines_
 
 |**Register**|**Bits**|**Name**                        |
@@ -137,7 +137,7 @@ _These registers are used to configure modes on the cpu (Setting Flags) to alter
 
 ## Index Registers
 
-###Source Index Registers
+### Source Index Registers
 _Used as an source index for string operations_
 
 |**Register**|**Bits**|**Name**                        |
@@ -156,7 +156,7 @@ _Used as destination index for string operations_
 
 ## Segment Registers
 
-####Code Segment Registers
+#### Code Segment Registers
 _This contains all the instructions to be executed_
 
 |**Register**|**Bits**|**Name**                               | 
@@ -164,7 +164,7 @@ _This contains all the instructions to be executed_
 |   CS      | 16     | Code Segment Register                  |
 |   ECS     | 32     | Extended Code Segment Register         |
 
-####Data Segment Registers
+#### Data Segment Registers
 _This contains data, constants and work ares_
 
 |**Register**|**Bits**|**Name**                        |
@@ -172,7 +172,7 @@ _This contains data, constants and work ares_
 |   DS       | 16     | Data segment Register          | 
 |   EDS      | 32     | Extended Data segment Register | 
  
-####Stack Segment Registers
+#### Stack Segment Registers
 _This contains data and return addresses of subroutines, procederes. It is implemented as an stack
 data structure_
 
