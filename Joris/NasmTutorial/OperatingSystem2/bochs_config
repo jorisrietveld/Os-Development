@@ -1,0 +1,13 @@
+# ROM and VGA BIOS images ---------------------------------------------
+
+romimage:    file=BIOS-bochs-latest, address=0xf0000
+vgaromimage: VGABIOS-lgpl-latest
+
+# boot from floppy using our disk image -------------------------------
+floppya: 1_44=a:, status=inserted  # Boot from drive A
+
+# logging and reporting -----------------------------------------------
+
+log:         OSDev.log             # All errors and info logs will output to OSDev.log
+error:       action=report
+info:        action=report

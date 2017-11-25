@@ -9,12 +9,13 @@ boot2:
 	mov ss, ax          ;
 	mov esi,HELLO       ; Move hello string to segment register.
 	mov ebx,0xb8000     ; Copy the segment register data to the VGA text buffer.
+						; 0xb80FF
     call print_string
 
 halt:
 	cli
 	hlt
 
-HELLO db "Hello world!",0  ; Define an string constant
+HELLO db "Hello world!", 0 ; Define an string constant
 
 %include "print_string.asm"

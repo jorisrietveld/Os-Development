@@ -64,7 +64,7 @@ main_routine:;Wait for society reboot
 header_str db '-------------{ FSOCIETY OS }-------------', 0x0D, 0x0A, 0
 menu_opt1_str db '[1] - Send 3Li0t an message over RTC'
 menu_opt2_str db '[2] - Steal mountain is ready call in the dark army'
-msg_rtc_str db 'hello friend...', 0x0D, 0x0D, 0x0A, 0
+msg_rtc_str db 'hello friend...', 0x0D, 0x0A, 0
 msg_error_str db 'The dark army is out...', 0x0D, 0x0A, 0
 prompt_str db '>', 0
 cmd_rtc_str db '1', 0
@@ -77,8 +77,7 @@ write_string_func:  ; Print a string to the screen function.
     lodsb           ; Get byte from the segment index register.
     or al, al       ; logical or on al register, are there we done printing characters?
     jz .return      ; Then return to the main routine.
-
-    mov ah, 0x0E    ; Otherwise fetch an new character.
+    mov ah, 0x0E    ; Set the high bit to shift out operation.
     int 0x10        ; And print the character to the screen with an BIOS interrupt.
     jmp write_string_func ; Go the the next character.
     .return: ret    ; Back to main routine.
