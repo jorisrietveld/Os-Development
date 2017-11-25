@@ -91,8 +91,8 @@ main_routine:
 ; The 0x00 means NULL in ascii (string terminator)
 HEADER1_STR db '========================================', 0x0D, 0x0A, 0x00
 HEADER_STR db '-------------{ STENDEX OS }-------------', 0x0D, 0x0A, 0x00
-MENU_OPT1_STR db '[1] - Boot stendex kernel',0x0D, 0x0A, 0x00
-MENU_OPT2_STR db '[2] - Shutdown the computter',0x0D, 0x0A,  0x00
+MENU_OPT1_STR db '[boot] - Boot stendex kernel',0x0D, 0x0A, 0x00
+MENU_OPT2_STR db '[shutdown] - Shutdown the computter',0x0D, 0x0A,  0x00
 MSG_BOOTING db 'Booting stendex', 0x0D, 0x0D, 0x0A,  0x00
 MSG_ERROR db 'unrecognized command', 0x0D, 0x0A,  0x00
 MSG_SHUTDOWN db 'Shutting down',0x0D, 0x0D, 0x0A,  0x00
