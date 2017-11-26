@@ -27,28 +27,43 @@ bpbRootEntries: 	    dw 224          ; The maximum amount of entries in the root
 bpbTotalSectors: 	    dw 2880         ; The amount of sectors that are present on the floppy disk.
 bpbMedia: 	            db 0b11110000   ; Media description settings (single sided, 9 sectors per FAT, 80 tracks, and not removable)
 bpbSectorsPerFAT: 	    dw 9            ; The amount of sectors in each FAT entry.
-bpbSectorsPerTrack: 	DW 18           ; The amount of sectors after each other on the floppy disk.
-bpbHeadsPerCylinder: 	DW 2            ; The amount of reading heads above each other on the floppy disk.
-bpbHiddenSectors: 	    DD 0            ; The amount of sectors between the physical start of the disk and the start of the volume.
-bpbTotalSectorsBig:     DD 0            ;
-bsDriveNumber: 	        DB 0            ; 0 because this is the standard for floppy disks.
-bsUnused: 	            DB 0            ; We are using everything on the floppy disk.
-bsExtBootSignature: 	DB 0x29         ; The boot signature of: MS/PC-DOS Version 4.0
-bsSerialNumber:	        DD 0xDEADC0DE   ; This will get overwritten every time the image get written so it doesn't matter.
-bsVolumeLabel: 	        DB "JORUX OS   "; The label of the volume.
-bsFileSystem: 	        DB "FAT12   "   ; The type of file system.
+bpbSectorsPerTrack: 	dw 18           ; The amount of sectors after each other on the floppy disk.
+bpbHeadsPerCylinder: 	dw 2            ; The amount of reading heads above each other on the floppy disk.
+bpbHiddenSectors: 	    dd 0            ; The amount of sectors between the physical start of the disk and the start of the volume.
+bpbTotalSectorsBig:     dd 0            ;
+bsDriveNumber: 	        db 0            ; 0 because this is the standard for floppy disks.
+bsUnused: 	            db 0            ; We are using everything on the floppy disk.
+bsExtBootSignature: 	db 0x29         ; The boot signature of: MS/PC-DOS Version 4.0
+bsSerialNumber:	        dd 0xDEADC0DE   ; This will get overwritten every time the image get written so it doesn't matter.
+bsVolumeLabel: 	        db "JORUX OS   "; The label of the volume.
+bsFileSystem: 	        db "FAT12   "   ; The type of file system.
 
 ;
-;
+; Prints a string to the screen.
 ;
 print_string:
-    ; Load Data segment Byte
-    lodsb       ; Load byte from string element addressed by DS:SI to the accumulator. The Direction Flag is clear so SI is incremented.
-    or al, al   ; Do fast logical OR on the low byte of the accumulator (containing an char of the string)
-    jz
+    pusha   ; Save the current registers states of the CPU before altering them in this function.
 
+    .print_character:
+        ; Load Data segment Byte
+        lodsb       ; Load byte from string element addressed by DS:SI to the accumulator low register. The Direction Flag is clear
+                    ; so SI (source index) is incremented so we can get the next character if we need to print more characters.
+        or al, al   ; Do fast logical OR on the low byte of the accumulator low byte (containing an char of the string)
+        jz .return  ; Done printing, the if the loaded byte contains an zero the or will set the zero flag.
+
+        mov ah, 0x0e; Set the ASCII SO (shift out) character to the high byte of the accumulator.
+        int 0x10    ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the accumulator register
+                    ; contains an ASCII SO character this will determine the video function to perform. The low byte contains the
+                    ; argument of that function (a character), so combined it will shift out(ah) the character stored in al.
+
+        jmp .print_character ; Finished printing this character move to the next.
+
+    .return:
+        popa    ; Restore the state of the CPU registers to before executing this function.
+        ret     ; The string is printed and the registers are restored so go back to the caller.
 ;
 ; This is the entry point of the second stage bootloader.
 ;
 init_loader:
+    xor ax, ax  ; Zero the accumulator register. (using xor because is it faster than an copy operation)
 
