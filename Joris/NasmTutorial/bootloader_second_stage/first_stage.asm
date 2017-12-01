@@ -83,7 +83,6 @@ loader:
     mov ah, 0x02    ; The ax high byte contains the function to execute, 2 reads an segment.
     mov al, 1       ; The ax low byte contains the argument to pass, pass 1 for 1 sector.
 
-
     xor ax, ax  ; Zero the accumulator register. (using xor because is it faster than an copy operation like: mov ax, 0)
     mov ds, ax  ; Set data segment to 7c00:0
     mov es, ax  ; Set extra segment to 7c00:0
