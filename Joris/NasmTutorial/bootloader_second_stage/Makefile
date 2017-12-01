@@ -1,9 +1,5 @@
 UNAME := $(shell uname)
-ifeq ($(UNAME), Darwin)
-	STAT := gstat
-else
-	STAT := stat
-endif
+STAT := stat
 
 all: first_stage.img
 
@@ -14,6 +10,9 @@ first_stage.img: first_stage.asm Makefile
 
 run: first_stage.img
 	@qemu-system-i386 -net none -drive file=first_stage.img,index=0,media=disk,format=raw
+
+dump: first_stage.img
+	@hexdump first_stage.img
 
 debug: first_stage.img
 	@qemu-system-i386 -net none -s -S -boot a -drive file=first_stage.img,index=0,media=disk,format=raw & gdb -q

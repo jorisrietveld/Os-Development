@@ -11,7 +11,7 @@
 ;
 bits 16         ; Configure the assembler to compile into 16 bit instructions (For 16 bit real-mode)
 org 0x7c00      ; Memory offset to address 0x7c00, so we don't overwrite the BIOS interrupt vectors.
-jmp init_loader ; Jump to the initiation function that loads the second loader.
+jmp loader      ; Jump to the initiation function that loads the second loader.
 nop             ; Do nothing
 
 ;
@@ -39,6 +39,11 @@ bsVolumeLabel: 	        db "JORUX OS   "; The label of the volume.
 bsFileSystem: 	        db "FAT12   "   ; The type of file system.
 
 ;
+; Some string contants.
+;
+STR_HELLO:  db "Welcome to Jorix OS", 0
+
+;
 ; Prints a string to the screen.
 ;
 print_string:
@@ -64,6 +69,33 @@ print_string:
 ;
 ; This is the entry point of the second stage bootloader.
 ;
-init_loader:
-    xor ax, ax  ; Zero the accumulator register. (using xor because is it faster than an copy operation)
+loader:
+    .reset:
+    mov ah, 0   ; The accumulator high byte contains the function to execute, function 0 resets the drive.
+    mov dl, 0   ; The data segment contains the drive number, so 0 for the floppy drive.
+    int 0x13    ; Fire an low level disk service interrupt that uses ah as function and dl to select an drive.
+    jc .reset   ; Reset again if the carry flag is set, the carry flag gets set by the bios interrupt when an error occurs.
 
+    mov ax, 0x1000  ; We are going to read in the sector at address 0x1000:0
+    mov es, ax      ; Set the extra segment register to that address.
+    xor bx, bx      ; Set the base register to 0 (using xor because it is faster than a: mov bx, 0)
+
+    mov ah, 0x02    ; The ax high byte contains the function to execute, 2 reads an segment.
+    mov al, 1       ; The ax low byte contains the argument to pass, pass 1 for 1 sector.
+
+
+    xor ax, ax  ; Zero the accumulator register. (using xor because is it faster than an copy operation like: mov ax, 0)
+    mov ds, ax  ; Set data segment to 7c00:0
+    mov es, ax  ; Set extra segment to 7c00:0
+
+    mov si, STR_HELLO   ; Point the segment index to the hello string.
+    call print_string   ; Call the print function that outputs the data in segment index register.
+
+    xor ax, ax  ; Zero the accumulator register again.
+    int 0x12    ; Get the amount of KB from the bios into the accumulator.
+
+    cli ; Clear all interrupts
+    hlt ; Halt the execution.
+
+times 510 - ($-$$) db 0     ; Fill all unused memory with zeros until the 510th byte.
+dw 0xaa55                   ; Set the bootable flag at the 510th byte so the bios knows this sector is bootable.

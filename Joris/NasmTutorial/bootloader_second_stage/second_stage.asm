@@ -14,6 +14,11 @@ bits 16     ; Assemble to 16 bit instructions (For 16 bit real-mode)
 
 jmp main    ; Jump to the main label.
 
+;
+; A print function in the second stage of the bootloader.
+; Arguments:
+;   SI  =   This register is
+;
 
 ;
 ; This is the entry point of the second stage bootloader.
