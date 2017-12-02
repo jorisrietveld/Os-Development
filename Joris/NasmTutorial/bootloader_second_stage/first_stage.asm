@@ -87,6 +87,7 @@ loader:
     mov ds, ax  ; Set data segment to 7c00:0
     mov es, ax  ; Set extra segment to 7c00:0
 
+
     mov si, STR_HELLO   ; Point the segment index to the hello string.
     call print_string   ; Call the print function that outputs the data in segment index register.
 
