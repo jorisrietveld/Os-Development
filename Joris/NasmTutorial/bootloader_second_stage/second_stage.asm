@@ -15,14 +15,6 @@ bits 16     ; Assemble to 16 bit instructions (For 16 bit real-mode)
 jmp main    ; Jump to the main label.
 
 ;
-; Some string constants.
-; Info:
-; 0x0D is the ASCII Control CR (Carriage Return) character, this moves the carriage to the beginning of the line.
-; 0x0A is the ASCII Control NL (New Line feed) character, this moves the carriage to the next line.
-;
-message: db "Preparing to load the operating system...", 0x0D, 0x0A, 0 ;
-
-;
 ; A print function in the second stage of the bootloader.
 ; Arguments:
 ;   SI  =   This should contain the source address of the string to print.
@@ -50,4 +42,14 @@ main:
     push cs ; DS=CS
     pop ds  ;
 
-    mov si, me
+    mov si, message ; Move the address of the welcome message to the source index register.
+    call print      ; Print the stored message to the screen.
+    cli     ; Clear the interrupts.
+    hlt     ; Halt the execution.
+;
+; Some string constants.
+; Info:
+; 0x0D is the ASCII Control CR (Carriage Return) character, this moves the carriage to the beginning of the line.
+; 0x0A is the ASCII Control NL (New Line feed) character, this moves the carriage to the next line.
+;
+message: db "Preparing to load the operating system...", 0x0D, 0x0A, 0 ;

@@ -96,5 +96,7 @@ loader:
     cli ; Clear all interrupts
     hlt ; Halt the execution.
 
+
+
 times 510 - ($-$$) db 0     ; Fill all unused memory with zeros until the 510th byte.
 dw 0xaa55                   ; Set the bootable flag at the 510th byte so the bios knows this sector is bootable.
