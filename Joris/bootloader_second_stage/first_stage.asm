@@ -62,37 +62,20 @@ print_string:
                     ; argument of that function (a character), so combined it will shift out(ah) the character stored in al.
 
         jmp .print_character ; Finished printing this character move to the next.
-
     .return:
         popa    ; Restore the state of the CPU registers to before executing this function.
         ret     ; The string is printed and the registers are restored so go back to the caller.
 ;
 ; This is the entry point of the second stage bootloader.
 ;
-loader:
-    .reset:
-    mov ah, 0   ; The accumulator high byte contains the function to execute, function 0 resets the drive.
-    mov dl, 0   ; The data segment contains the drive number, so 0 for the floppy drive.
-    int 0x13    ; Fire an low level disk service interrupt that uses ah as function and dl to select an drive.
-    jc .reset   ; Reset again if the carry flag is set, the carry flag gets set by the bios interrupt when an error occurs.
+main:
 
-    mov ax, 0x1000  ; We are going to read in the sector at address 0x1000:0
-    mov es, ax      ; Set the extra segment register to that address.
-    xor bx, bx      ; Set the base register to 0 (using xor because it is faster than a: mov bx, 0)
-
-    mov ah, 0x02    ; The ax high byte contains the function to execute, 2 reads an segment.
-    mov al, 1       ; The ax low byte contains the argument to pass, pass 1 for 1 sector.
-
-    xor ax, ax  ; Zero the accumulator register. (using xor because is it faster than an copy operation like: mov ax, 0)
-    mov ds, ax  ; Set data segment to 7c00:0
-    mov es, ax  ; Set extra segment to 7c00:0
-
-
-    mov si, STR_HELLO   ; Point the segment index to the hello string.
-    call print_string   ; Call the print function that outputs the data in segment index register.
-
-    xor ax, ax  ; Zero the accumulator register again.
-    int 0x12    ; Get the amount of KB from the bios into the accumulator.
+    load_root:
+        xor cx, cx  ; Zero the counter register.
+        xor dx, dx  ; Zero the data register.
+        mov ax, 0x0020  ; 32 byte directory entry.
+        mul word [bpbRootEntries]   ; Number of root entries.
+        div word [bpbBytesPerSector]; Get the sectors used by the root directory.
 
     cli ; Clear all interrupts
     hlt ; Halt the execution.

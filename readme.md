@@ -4,11 +4,8 @@ group INF2B.
 
 
 ### Solutions
- - Solutions made by [Alwin](Alwin)
- - Solutions made by [Arjan](Arjan)
- - Solutions made by [Daan](Daan)
+ - Solutions made by [Arjan](https://github.com/arjan-kuiper/BootMenu)
  - Solutions made by [Joris](Joris/readme.md)
- - Solutions made by [Siem](Siem)
  
 ### License
 Copyright (C) 2017 Project members of INF2B 

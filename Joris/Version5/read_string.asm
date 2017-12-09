@@ -47,8 +47,8 @@ read_string: ; Read key presses from the user.
         mov al, 0       ; Set an null terminator to the register.
         stosb           ; Append the terminator to the end of the string.
 
-        mov ah, 0x0E    ; Reset accumulator high byte.
-        mov al, 0x0D    ; Reset accumulator high byte.
+        mov ah, 0x0E    ;
+        mov al, 0x0D    ;
         int 0x10
         mov al, 0x0A    ; Set an newline character to the register.
         int 0x10        ; Insert the newline character
