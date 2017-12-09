@@ -19,13 +19,17 @@
     
 #### Tasks
 _Part 1_
- -[x] Complete the first part of the tutorial.
+ - [x] Complete the first part of the tutorial.
     - Done, see [This directory](Version1) for the solution.
- -[x] Change the program by adding an input menu with at least three options that a
+ - [x] Change the program by adding an input menu with at least three options that a
 user can select. Depending on the selection, different output is shown.
     - Done see [This directory](version4) for the solution.
- -[ ] Complete the second part of the tutorial, pick your own favorite color for the output (anything readable).
- -[ ] Complete the third part A of the tutorial.
- -[ ] Complete the third B part of the tutorial.
- -[ ] Extend the program by adding an input menu with at least three options that a
+ - [ ] Complete the second part of the tutorial, pick your own favorite color for the output (anything readable).
+ - [ ] Complete the third part A of the tutorial.
+ - [ ] Complete the third B part of the tutorial.
+ - [ ] Extend the program by adding an input menu with at least three options that a
       user can select. Depending on the selection, different output is shown.
+
+#### Notes:
+- `utils.asm` This is an file that contains some string manipulation utils as NASM macros, [see the file](jorix_boot/utils.asm)
+- `Makefile` This is an file that is used to build the bootloader, [see the file](jorix_boot/Makefile)
