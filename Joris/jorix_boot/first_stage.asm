@@ -14,7 +14,7 @@ org 0x7c00      ; Memory offset to address 0x7c00, so we don't overwrite the BIO
 
 start:
     jmp main      ; Jump to the initiation function that loads the second loader.
-
+    nop
 ;
 ;   The BIOS Parameter Block
 ;
@@ -82,32 +82,36 @@ read_sectors:
     .main:
         mov di, 0x0005  ; The amount of retries if an error occurs.
     .readAnSector:
-        push ax                             ; Save ax, that contains the starting address of the sectors to read.
-        push bx                             ; Save bx, that contains the address to copy the read sectors to.
-        push cx                             ; Save cx, that contains the amount of sectors it should read.
-        call convert_LBA_CHS                ; Get the correct register addresses.
+        push ax                         ; Save ax, that contains the starting address of the sectors to read.
+        push bx                         ; Save bx, that contains the address to copy the read sectors to.
+        push cx                         ; Save cx, that contains the amount of sectors it should read.
+        call convert_LBA_CHS            ; Get the correct register addresses.
         mov ah, 0x02
         mov al, 0x01
-        mov     ch, BYTE [absoluteTrack]    ; track
-        mov     cl, BYTE [absoluteSector]   ; sector
-        mov     dh, BYTE [absoluteHead]     ; head
-        mov     dl, BYTE [bsDriveNumber]    ; drive
-        int     0x13                        ; invoke BIOS
-        jnc     .readedSuccessfull          ; test for read error
-        xor     ax, ax                      ; BIOS reset disk
-        int     0x13                        ; invoke BIOS
-        dec     di                          ; decrement error counter
-        pop     cx
-        pop     bx
-        pop     ax
-        jnz     .readAnSector              ; attempt to read again
-        int     0x18
+        mov ch, BYTE [absoluteTrack]    ; track
+        mov cl, BYTE [absoluteSector]   ; sector
+        mov dh, BYTE [absoluteHead]     ; head
+        mov dl, BYTE [bsDriveNumber]    ; drive
+        int 0x13                        ; invoke BIOS
+        jnc .readedSuccessfull          ; test for read error
+        xor ax, ax                      ; BIOS reset disk
+        int 0x13                        ; invoke BIOS
+        dec di                          ; decrement error counter
+        pop cx                          ; Restore the state of the cx register.
+        pop bx                          ; Restore the state of the bx register.
+        pop ax                          ; Restore the state of the ax register.
+        jnz .readAnSector               ; attempt to read again
+        int 0x18                        ; Reset and try again.
     .readedSuccessfull:
-        mov     si, msgProgress
-        call    Print
-        pop     cx
-        pop     bx
-        pop     ax
+        mov     si, msgProgress         ; Load a progress message to notify the user of an successful read.
+        call    Print                   ; Print the message to the screen.
+        pop     cx                      ; Restore the state of the cx register.
+        pop     bx                      ; Restore the state of the bx register.
+        pop     ax                      ; Restore the state of the ax register.
+        add bx, word[bpbBytesPerSector] ; Queue the next buffer
+        inc ax                          ; Increment the read counter
+        loop .main                      ; Move ahead to the next sector to read.
+        ret                             ; return
 
 ;   convert_CHS_LBA
 ;
@@ -131,35 +135,39 @@ main:
         ; Calculate the size of the root directory
         xor cx, cx                          ; Zero the counter register.
         xor dx, dx                          ; Zero the data register.
-        mov ax, 0x0020                      ; 32 byte directory entry.
-        mul word [bpbRootEntries]           ; Number of root entries.
-        div word [bpbBytesPerSector]        ; Get the sectors used by the root directory.
-        xchg ax, cx                         ; exchange registers, set start reg to cx and reset ax to zero.
+        mov ax, 0x0020                      ; Move the number 32 (the size of an FAT directory entry) to ax.
+        mul word [bpbRootEntries]           ; Then multiply the size of each entry by the number of root entries.
+        div word [bpbBytesPerSector]        ; Finally divide the number of root entries by the bytes each sector has to get the amount
+                                            ; of bytes the root entry uses.
+        xchg ax, cx                         ; exchange registers, so that cx contains the answer of the calculation and ax 0 for the next.
 
-        ; Calculate the location of the root directory.
-        mov al, byte[bpbNumberOfFATs]       ; First get the number of fats
-        mul word[bpbSectorsPerFAT]          ; Then multiply that with the amount of sectors per fat.
-        add ax, word[bpbReservedSectors]    ; Add the reserved sector (the bootloader)
-        mov word[datasector], ax            ; Get the base of the root directory
-        add word[datasector], cx            ;
+        ; Calculate the location of the root directory. (Remember the root directory is after: boot sector, extra reserved sectors, FAT 1 and FAT 2)
+        mov al, byte[bpbNumberOfFATs]       ; First get the number of FAT's
+        mul word[bpbSectorsPerFAT]          ; Then multiply that with the amount of sectors each FAT has.
+        add ax, word[bpbReservedSectors]    ; Then add the reserved sectors (Like the bootloader) to get the amount of sectors before the root directory.
+        mov word[datasector], ax            ; Set the starting point of the data sector to ax (Start of our code) to pass to the read sectors function.
+        add word[datasector], cx            ; Finally add the starting address to the total size to get the total amount of segments to read.
 
-        ; Read the root directory into memory at 7c00:0200
-        mov bx, 0x0200                      ; Copy the root directory above the boot code.
-        call read_sectors                    ; Call the read function that loads sectors to memory.
+        ; Read the root directory into memory at 7c00:0200 using the just calculated AX (starting point) and CX (Amount of sectors to read) as arguments.
+        mov bx, 0x0200                      ; Define the location where the root directory should be loaded to, This is after the boot code (320 bytes)
+        call read_sectors                    ; Call the function that actually reads sectors into memory.
 
-        ; Find stage 2
-        mov cx, word[bpbRootEntries]        ;
-        mov di, 0x0200                      ;
-
+        ; Find the location of the second stage of the bootloader located some where in the root directory.
+        mov cx, word[bpbRootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root directory. This counter will
+                                            ; be decremented until the correct entry is found or if we reach 0, which means that the file doesn't exist.
+        mov di, 0x0200                      ; Set the pointer for comparing the each character in the second stage file name to the start of the root directory.
         .loopFilename:
-            push cx                         ;
-            mov cx, 0x000B                  ;
-            mov si, ImageName               ;
-            push di                         ;
-        rep cmpsb                           ; Test if an entry matches
-            pop di                          ;
-            je loadFAT                      ;
-            pop cx                          ;
+            push cx                         ; Save the boot entry counter to the stack so it can be restored later.
+            mov cx, 0x000B                  ; Initiate the counter with the number 11 (the required length of a FAT12 file name) so we can iterate through each
+                                            ; character and compare it with the file name of the second stage of the bootloader.
+            mov si, ImageName               ; Point the source for the compare operation to string that defines the file name of the second stage bootloader.
+            push di                         ; Save the starting location of the current entry that is being compared, so we can recover it if the compare operation
+                                            ; found a match. This is needed because the compare operation will increment and thus alter the index each iteration.
+            rep cmpsb                       ; Repeat the string compare as long as the characters are the same or if the cx is at 0 which means the file is found.
+            pop di                          ; Fetch the starting address of the entry just checked from the stack.
+            je loadFAT                      ; Check if the last character compare operation has set the zero flag, if so we found the second stage file. Remember that 0
+                                            ; means that there is an difference of 0 bits between comparing the characters.(cmpsb just subtracts di from si).
+            pop cx                          ; Restore
             add di, 32                      ;
             loop .loopFilename              ;
             jmp failure                     ;
