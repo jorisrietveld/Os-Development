@@ -9,8 +9,8 @@
 ;   some basic functions and initiating an second stage bootloader that will
 ;   start the kernel.
 ;
-bits 16         ; Configure the assembler to compile into 16 bit instructions (For 16 bit real-mode)
-org 0x7c00      ; Memory offset to address 0x7c00, so we don't overwrite the BIOS interrupt vectors.
+bits 16     ; Configure the assembler to compile into 16 bit instructions (For 16 bit real-mode)
+org 0       ; Memory offset to address 0x7c00, so we don't overwrite the BIOS interrupt vectors.
 
 start:
     jmp main      ; Jump to the initiation function that loads the second loader.
@@ -131,6 +131,12 @@ convert_LBA_CHS:
 ; This is the entry point of the second stage bootloader.
 ;
 main:
+    cli
+    mov ax, 0x7c0
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
     load_root:
         ; Calculate the size of the root directory
         xor cx, cx                          ; Zero the counter register.
