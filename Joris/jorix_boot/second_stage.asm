@@ -1,7 +1,34 @@
+;                                                                                       ,   ,           ( VERSION 0.0.1
+;                                                                                         $,  $,     ,   `̅̅̅̅̅̅( 0x001
+;                                                                                         "ss.$ss. .s'          `̅̅̅̅̅̅
+;   MMMMMMMM""M MMP"""""YMM MM"""""""`MM M""M M""MMMM""M                          ,     .ss$$$$$$$$$$s,
+;   MMMMMMMM  M M' .mmm. `M MM  mmmm,  M M  M M  `MM'  M                          $. s$$$$$$$$$$$$$$`$$Ss
+;   MMMMMMMM  M M  MMMMM  M M'        .M M  M MM.    .MM    .d8888b. .d8888b.     "$$$$$$$$$$$$$$$$$$o$$$       ,
+;   MMMMMMMM  M M  MMMMM  M MM  MMMb. "M M  M M  .mm.  M    88'  `88 Y8ooooo.    s$$$$$$$$$$$$$$$$$$$$$$$$s,  ,s
+;   M. `MMM' .M M. `MMM' .M MM  MMMMM  M M  M M  MMMM  M    88.  .88       88   s$$$$$$$$$"$$$$$$""""$$$$$$"$$$$$,
+;   MM.     .MM MMb     dMM MM  MMMMM  M M  M M  MMMM  M    `88888P' `88888P'   s$$$$$$$$$$s""$$$$ssssss"$$$$$$$$"
+;   MMMMMMMMMMM MMMMMMMMMMM MMMMMMMMMMMM MMMM MMMMMMMMMM                       s$$$$$$$$$$'         `"""ss"$"$s""
+;                                                                               s$$$$$$$$$$,              `"""""$  .s$$s
+;   ______[  Author ]______    ______[  Contact ]_______                        s$$$$$$$$$$$$s,...               `s$$'  `
+;      Joris Rietveld           jorisrietveld@gmail.com                       sss$$$$$$$$$$$$$$$$$$$$####s.     .$$"$.   , s-
+;                                                                             `""""$$$$$$$$$$$$$$$$$$$$#####$$$$$$"     $.$'
+;   _______________[ Website & Source  ]________________                           "$$$$$$$$$$$$$$$$$$$$$####s""     .$$$|
+;       https://github.com/jorisrietveld/Bootloaders                                 "$$$$$$$$$$$$$$$$$$$$$$$$##s    .$$" $
+;                                                                                     $$""$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"   `
+;   ___________________[ Licence ]______________________                             $$"  "$"$$$$$$$$$$$$$$$$$$$$S""""'
+;             General Public licence version 3                                  ,   ,"     '  $$$$$$$$$$$$$$$$####s
+;   ===============================================================================================================    ;
+;                                                                                            First Stage Bootloader    ;                                                                                                                     ;
+;   Description:                                                                             ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅    ;
+;   This file contains the second stage of the bootloader. Because of the memory size constrains of only 512 bytes,    ;
+;   we have split the bootloader into two stages. One for setting up the minimal requirements of the system and a      ;
+;   second one that can switch the CPU into protected mode and knows how to locate and start the operating system.     ;
+;   This file contains the second stage that is responsible for loading the kernel. It contains both 16 bit and 32     ;
+;   bit assembler code because it will switch the CPU from 16 bit (Keep it) real mode to 32 bit protected mode.        ;
 ;
-;   Author: Joris Rietveld <jorisrietveld@gmail.com>
-;   Created: 13-11-2017 21:40
-;   Licence: GPLv3 - General Public Licence version 3
+;   _______C______________[ File  ]________________                                     ;
+;   Created: 13-11-2017 21:40   Altered: 11-12-2017 20:11
+;
 ;
 ;   Description:
 ;   This file contains the second stage of the bootloader. This code gets

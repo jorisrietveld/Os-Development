@@ -1,6 +1,6 @@
-;                                                                                       ,   ,
-;                                                                                         $,  $,     ,
-;                                                                                         "ss.$ss. .s'
+;                                                                                       ,   ,           ( VERSION 0.0.1
+;                                                                                         $,  $,     ,   `̅̅̅̅̅̅( 0x001
+;                                                                                         "ss.$ss. .s'          `̅̅̅̅̅̅
 ;   MMMMMMMM""M MMP"""""YMM MM"""""""`MM M""M M""MMMM""M                          ,     .ss$$$$$$$$$$s,
 ;   MMMMMMMM  M M' .mmm. `M MM  mmmm,  M M  M M  `MM'  M                          $. s$$$$$$$$$$$$$$`$$Ss
 ;   MMMMMMMM  M M  MMMMM  M M'        .M M  M MM.    .MM    .d8888b. .d8888b.     "$$$$$$$$$$$$$$$$$$o$$$       ,
@@ -33,8 +33,8 @@ org 0       ; Start outputting at instructions at 0 (We will use
 
 start:jmp main    ; Jump to the initiation function that loads the second loader.
 
-;______________________________________________________________________________________________/ § BIOS Parameter Block
-;   Description:
+;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
+;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
 ;   The BPB (BIOS Parameter Block) is the data structure that describes the the physical layout of the
 ;   device, in our case a floppy drive image.
 ;
@@ -45,7 +45,9 @@ bpbReservedSectors: 	dw 1            ; The amount of sectors that are not part o
 bpbNumberOfFATs: 	    db 2            ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
 bpbRootEntries: 	    dw 224          ; The maximum amount of entries in the root directory.
 bpbTotalSectors: 	    dw 2880         ; The amount of sectors that are present on the floppy disk.
-bpbMedia: 	            db 0b11110000   ; Media description settings: single sided, 9 sectors per FAT, 80 tracks, and not removable
+bpbMedia: 	            db 0b11110000   ; Media description settings:
+                                        ; single sided, 9 sectors per FAT, 80 tracks, and not removable
+                                        ; Explanation of the bits in the entry:
                                         ; Bit 0: Sides/Heads    = 0 if it is single sided, 1 if its double sided
                                         ; Bit 1: Size           = 0 if it has 9 sectors per FAT, 1 if it has 8.
                                         ; Bit 2: Density        = 0 if it has 80 tracks, 1 if it is 40 tracks.
@@ -64,8 +66,8 @@ bsSerialNumber:	        dd 0xDEADC0DE   ; This gets overwritten every time the i
 bsVolumeLabel: 	        db "JORUX OS   "; The label of the volume.
 bsFileSystem: 	        db "FAT12   "   ; The type of file system.
 
-;_______________________________________________________________________________________________________/ ϝ printString
-;   Description:
+;________________________________________________________________________________________________________________________/ ϝ printString
+;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅
 ;   This function can be used to print an null terminated string to the screen using the BIOS Video service
 ;   interrupts.To use this function you should point the source index (SI register) to the starting address
 ;   of the string you want to print.
@@ -80,23 +82,24 @@ printString:
 
     .print_character:
         ; Load Data segment Byte
-        lodsb       ; Load byte from string element addressed by DS:SI to the accumulator low register. The Direction Flag is clear
-                    ; so SI (source index) is incremented so we can get the next character if we need to print more characters.
+        lodsb       ; Load byte from string addressed by DS:SI to the ax low register. The Direction Flag is clear so SI
+                    ; (source index) is incremented so we can get the next character if we need to print more characters.
         or al, al   ; Do fast logical OR on the low byte of the accumulator low byte (containing an char of the string)
         jz .return  ; Done printing, the if the loaded byte contains an zero the or will set the zero flag.
 
         mov ah, 0x0e; Set the ASCII SO (shift out) character to the high byte of the accumulator.
-        int 0x10    ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the accumulator register
-                    ; contains an ASCII SO character this will determine the video function to perform. The low byte contains the
-                    ; argument of that function (a character), so combined it will shift out(ah) the character stored in al.
+        int 0x10    ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the
+                    ; accumulator register contains an ASCII SO character this will determine the video function to
+                    ; perform. The low byte contains the argument of that function (a character), so combined it will
+                    ; shift out(ah) the character stored in al.
         jmp .print_character ; Finished printing this character move to the next.
 
     .return:
         popa    ; Restore the state of the CPU registers to before executing this function.
         ret     ; The string is printed and the registers are restored so go back to the caller.
 
-;________________________________________________________________________________________________________/ ϝ readSectors
-;   Description:
+;________________________________________________________________________________________________________________________/ ϝ readSectors
+;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅
 ;   This function reads a series of sectors from a storage device to memory. It uses the cs, ax registers as arguments,
 ;   CX defines the amount of sectors it should read and AX defines the starting sector of the sector. ES:BX is used as
 ;   buffer that the read sectors should be written to.
@@ -136,8 +139,8 @@ readSectors:
         loop .main                      ; Move ahead to the next sector to read.
         ret                             ; return
 
-;_______________________________________________________________________________________________________/ ϝ readSectors
-;   Description:
+;________________________________________________________________________________________________________________________/ ϝ readSectors
+;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅
 ;   This function converts CHS (Cylinder/Head/Sector) addressing to LBA (Logical Block Addressing).
 ;
 convertChsToLba:
@@ -147,8 +150,8 @@ convertChsToLba:
     mul cx                              ; Multiply cx with 2
     add ax, word[datasector]            ; Set the base data sector.
     ret                                 ; return to the caller.
-;___________________________________________________________________________________________________/ ϝ convertLbaToChs
-;   Description:
+;________________________________________________________________________________________________________________________/ ϝ convertLbaToChs
+;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
 ;
 convertLbaToChs:
     xor dx, dx
@@ -161,7 +164,7 @@ convertLbaToChs:
     mov byte[absoluteTrack],al
     ret
 
-;______________________________________________________________________________________________________________/ § main
+;________________________________________________________________________________________________________________________/ § main
 ;   Description:
 ;   This is the entry point of the stage bootloader. It will initiate the memory segments and stack, Then it executes
 ;   the routines that prepare the system for the booting the kernel.
@@ -185,7 +188,7 @@ main:
     mov si, msgLoading
     call printString
 
-;_________________________________________________________________________________________________/ § loadRootDirectory
+;________________________________________________________________________________________________________________________/ § loadRootDirectory
 ;   Description:
 ;   This function will load the root directory from the floppy disk to memory
 ;
@@ -195,45 +198,60 @@ loadRootDirectory:
     xor dx, dx                          ; Zero the data register.
     mov ax, 0x0020                      ; Move the number 32 (the size of an FAT directory entry) to ax.
     mul word [bpbRootEntries]           ; Then multiply the size of each entry by the number of root entries.
-    div word [bpbBytesPerSector]        ; Finally divide the number of root entries by the bytes each sector has to get the amount
-                                        ; of bytes the root entry uses.
-    xchg ax, cx                         ; exchange registers, so that cx contains the answer of the calculation and ax 0 for the next.
+    div word [bpbBytesPerSector]        ; Finally divide the number of root entries by the bytes each sector has to get
+                                        ; the amount of bytes the root entry uses.
+    xchg ax, cx                         ; exchange registers, so that cx contains the answer of the calculation and
+                                        ; ax 0 for the next.
 
-    ; Calculate the location of the root directory. (Remember the root directory is after: boot sector, extra reserved sectors, FAT 1 and FAT 2)
+    ; Calculate the location of the root directory. (It starts after: boot sector, extra reserved sectors, the 2 FAT's)
     mov al, byte[bpbNumberOfFATs]       ; First get the number of FAT's
     mul word[bpbSectorsPerFAT]          ; Then multiply that with the amount of sectors each FAT has.
-    add ax, word[bpbReservedSectors]    ; Then add the reserved sectors (Like the bootloader) to get the amount of sectors before the root directory.
-    mov word[datasector], ax            ; Set the starting point of the data sector to ax (Start of our code) to pass to the read sectors function.
-    add word[datasector], cx            ; Finally add the starting address to the total size to get the total amount of segments to read.
+    add ax, word[bpbReservedSectors]    ; Then add the reserved sectors (Like the bootloader) to get the amount of
+                                        ; sectors before the root directory.
+    mov word[datasector], ax            ; Set the starting point of the data sector to ax (Start of our code) to pass to
+                                        ; the read sectors function.
+    add word[datasector], cx            ; Finally add the starting address to the total size to get the total amount of
+                                        ; segments to read.
 
-    ; Read the root directory into memory at 7c00:0200 using the just calculated AX (starting point) and CX (Amount of sectors to read) as arguments.
-    mov bx, 0x0200                      ; Define the location where the root directory should be loaded to, This is after the boot code (320 bytes)
+    ; Read the root directory into memory at 7c00:0200 using AX (starting point) and CX (Amount of sectors to read).
+    mov bx, 0x0200                      ; Define the location where the root directory should be loaded to, This is
+                                        ; after the boot code (320 bytes)
     call readSectors                    ; Call the function that actually reads sectors into memory.
 
     ; Find the location of the second stage of the bootloader located some where in the root directory.
-    mov cx, word[bpbRootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root directory. This counter will
-                                        ; be decremented until the correct entry is found or if we reach 0, which means that the file doesn't exist.
-    mov di, 0x0200                      ; Set the pointer for comparing the each character in the second stage file name to the start of the root directory.
+    mov cx, word[bpbRootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root
+                                        ; directory. This counter will be decremented until the correct entry is found
+                                        ; or if we reach 0, which means that the file doesn't exist.
+    mov di, 0x0200                      ; Set the pointer for comparing the each character in the second stage file name
+                                        ; to the start of the root directory.
 
     ;________________________________________ loopFilename _____________________________________________
     ; Loop through the FAT entries and test if the name matches the name of the second stage bootloader.
     .loopFilename:
         push cx                         ; Save the boot entry counter to the stack so it can be restored later.
-        mov cx, 0x000B                  ; Initiate the counter with the number 11 (the required length of a FAT12 file name) so we can iterate through each
-                                        ; character and compare it with the file name of the second stage of the bootloader.
-        mov si, imageName               ; Point the source for the compare operation to string that defines the file name of the second stage bootloader.
-        push di                         ; Save the starting location of the current entry that is being compared, so we can recover it if the compare operation
-                                        ; found a match. This is needed because the compare operation will increment and thus alter the index each iteration.
-        rep cmpsb                       ; Repeat the string compare as long as the characters are the same or if the cx is at 0 which means the file is found.
+        mov cx, 0x000B                  ; Initiate the counter with the number 11 (required length of a FAT12 file name)
+                                        ; so we can iterate through each character and compare it with the file name of
+                                        ; the second stage of the bootloader.
+        mov si, imageName               ; Point the source for the compare operation to string that defines the file name
+                                        ; of the second stage bootloader.
+        push di                         ; Save the starting location of the current entry that is being compared, so we
+                                        ; scan recover it if the compare operation
+                                        ; found a match. This is needed because the compare operation will increment and
+                                        ; thus alter the index each iteration.
+        rep cmpsb                       ; Repeat the string compare as long as the characters are the same or if the cx
+                                        ; is at 0 which means the file is found.
         pop di                          ; Fetch the starting address of the entry just checked from the stack.
-        je loadFAT                      ; Check if the last character compare operation has set the zero flag, if so we found the second stage file. Remember that 0
-                                        ; means that there is an difference of 0 bits between comparing the characters.(cmpsb just subtracts di from si).
+        je loadFAT                      ; Check if the last character compare operation has set the zero flag, if so we
+                                        ; found the second stage file. Remember that 0 means that there is an difference
+                                        ; of 0 bits between comparing the characters.(cmpsb just subtracts di from si).
         pop cx                          ; Fetch the entry counter from the stack.
-        add di, 0x0020                  ; Add 32 bits to the destination pointer so it points to the next entry in the root directory.
-        loop .loopFilename              ; Go to the next entry to check if it contains the sesond stage bootloader. (this also decrements cx)
+        add di, 0x0020                  ; Add 32 bits to the destination pointer so it points to the next entry in the
+                                        ; root directory.
+        loop .loopFilename              ; Go to the next entry to check if it contains the sesond stage bootloader.
+                                        ; remember that this also decrements cx, so it knows what entry is being read.
         jmp failure                     ; Unfortunately the second bootloader was not found so notify the user.
 
-;___________________________________________________________________________________________________________/ § loadFAT
+;________________________________________________________________________________________________________________________/ § loadFAT
 ;   Description:
 ;   This function will load the file allocation table into memory.
 ;
@@ -263,7 +281,7 @@ loadFAT:
     mov bx, 0x0000                  ; The destination for the image
     push bx                         ; push the destination to the stack.
 
-;_________________________________________________________________________________________________________/ § loadImage
+;________________________________________________________________________________________________________________________/ § loadImage
 ;   Description:
 ;   This function will load the image (containing the second stage of the bootloader) from a storage device.
 ;
@@ -304,7 +322,7 @@ loadImage:
         cmp dx, 0x0ff0          ; Compare the data register to 4080
         jb loadImage            ; Move to the next
 
-;__________________________________________________________________________________________________/ § executeNextStage
+;________________________________________________________________________________________________________________________/ § executeNextStage
 ;   Description:
 ;   This function will set the the addresses of the second stage on to the stack and move the instruction
 ;   pointer to that location, so the second stage gets executed.
@@ -315,10 +333,10 @@ executeNextStage:
     push word 0x0050        ;
     push word 0x0000        ;
     retf
-;___________________________________________________________________________________________________________/ § failure
+;________________________________________________________________________________________________________________________/ § failure
 ;   Description:
 ;   The name is pretty explanatory, it is a description of me, my life, the architects of x86, Alan Tuning...
-;   Happy debugging! (｡◕‿◕｡)⊃━☆ﾟ.*･｡ﾟ
+;   (｡◕‿◕｡)⊃━☆ﾟ.*･｡ﾟ Happy debugging ԅ(≖‿≖ԅ)
 ;
 failure:
     mov si, msgNewLine      ; todo: remove this with my println macro
@@ -328,7 +346,7 @@ failure:
     int 0x19                ; Reset the system.
 
 
-;_________________________________________________________________________________________________________/ § Variables
+;________________________________________________________________________________________________________________________/ § Variables
 ;
 absoluteSector  db 0x00
 absoluteHead    db 0x00
@@ -343,7 +361,7 @@ msgNewLine  db 0x0A, 0x0D
 msgProgress db ".", 0
 msgFailure  db "Error: press any key to destroy your computer."
 
-;____________________________________________________________________________________________/ § End of the first stage
+;________________________________________________________________________________________________________________________/ § End of the first stage
 ;
 times 510 - ($-$$) db 0     ; Fill all unused memory with zeros until the 510th byte.
 dw 0xaa55                   ; Set the bootable flag at the 510th byte so the bios knows this sector is bootable.
