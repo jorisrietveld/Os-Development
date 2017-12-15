@@ -9,12 +9,11 @@ BASE_NAME:=hello1
 
 
 all: assemble link run
-	@echo "====================================================================
-	@echo "= 						x64
-	@echo "
-    @echo "
-    @echo "
-    @echo "
+	@echo "\e[34m\n"
+	@echo "===================================================================="
+	@echo "= 				 x64 Assembler Tutorial							  ="
+	@echo "=------------------------------------------------------------------="
+	@echo "= Assemble, Link and execute the $(BASE_NAME) program			  ="
 
 assemble: $(BASE_NAME).asm ## Assemle the code to binary instuctions.
 	@echo "Assebling..."
