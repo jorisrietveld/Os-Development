@@ -7,13 +7,7 @@
 .DEFAULT_GOAL:=help
 BASE_NAME:=hello1
 
-
-all: assemble link run
-	@echo "\e[34m\n"
-	@echo "===================================================================="
-	@echo "= 				 x64 Assembler Tutorial							  ="
-	@echo "=------------------------------------------------------------------="
-	@echo "= Assemble, Link and execute the $(BASE_NAME) program			  ="
+all: .PRINT_HEADER assemble link run .PRINT_FOOTER
 
 assemble: $(BASE_NAME).asm ## Assemle the code to binary instuctions.
 	@echo "Assebling..."
@@ -26,12 +20,28 @@ link: $(BASE_NAME).o ## Assemle the code to binary instuctions.
 	@echo "\e[92mSuccessfully linked $(BASE_NAME).0 to $(BASE_NAME)\e[39m"
 
 run: $(BASE_NAME) ## Run the compiled binary.
-	./hello1
+	@echo "\e[34m\e[1m"
+	@echo "The output of the program:"
+	@echo "\e[39m"
+	@./hello1
 
 .PHONY: help
 
+.PRINT_HEADER:
+	@echo "\e[34m\e[1m\n"
+	@echo "===================================================================="
+	@echo "=                    x64 Assembler Tutorial                        ="
+	@echo "=------------------------------------------------------------------="
+	@echo "=       Assemble, Link and execute the $(BASE_NAME) program\t\t\t   ="
+	@echo "=__________________________________________________________________="
+	@echo "\e[39m"
+
+.PRINT_FOOTER:
+	@echo "\e[34m\e[1m\n"
+	@echo "____________________________[ Done ]_______________________________"
+	@echo "\e[39m"
+
 help:
-	# Some black magic for documenting make instructions with dubble hashtags
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 
