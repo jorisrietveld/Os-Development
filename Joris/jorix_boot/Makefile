@@ -1,35 +1,34 @@
-UNAME := $(shell uname)
-STAT := stat
+#		    MMMMMMMM""M MMP"""""YMM MM"""""""`MM M""M M""MMMM""M							#
+#		    MMMMMMMM  M M' .mmm. `M MM  mmmm,  M M  M M  `MM'  M							 	#
+#		    MMMMMMMM  M M  MMMMM  M M'        .M M  M MM.    .MM    .d8888b. .d8888b.			#
+#		    MMMMMMMM  M M  MMMMM  M MM  MMMb. "M M  M M  .mm.  M    88'  `88 Y8ooooo.			#
+#		    M. `MMM' .M M. `MMM' .M MM  MMMMM  M M  M M  MMMM  M    88.  .88       88			#
+#		    MM.     .MM MMb     dMM MM  MMMMM  M M  M M  MMMM  M    `88888P' `88888P'			#
+#		   MMMMMMMMMMM MMMMMMMMMMM MMMMMMMMMMMM MMMM MMMMMMMMMM									#
+#		____________________________________[ Aurhor ]____________________________________		#
+#			Author: Joris Rietveld	<jorisrietveld@gmail.com> github.com/jorisrietveld			#
+#	 		_ 	_	_ 	_	_ 	_	_ 	_	_ 	_	_ 	_	_ 	_	_ 	_	_	_	_ 			#
+#			Project Homepage:																	#
+#		 	Licence: GPLv3 - General Public Licence version 3									#
+#																								#
+#										 Desctiption										#
+#
 
-all: stage1.bin stage2.bin boot.img
+#____________________________________________________/ Image Creation Options |
+# This is the file name of the bootable image to create.
+BootableImage=jorix.img
+# The size of the blocks on the bootable image.
+blockSize=512
+# The amount of blocks the image should have.
+diskSize=100
 
-stage1.bin: first_stage.asm Makefile
-	nasm -d DEBUG -f bin first_stage.asm -o stage1.bin
-	@echo "size of the first stage bootloader is" `$(STAT) -c "%s" stage1.bin`
+#________________________________________________________/ Bootloader Options |
 
-stage2.bin: second_stage.asm Makefile
-	nasm -d DEBUG -f bin second_stage.asm -o stage2.bin
-	@echo "size of the second stage bootloader is" `$(STAT) -c "%s" stage2.bin`
+firstStage=first_stage
 
-boot.img: stage1.bin stage2.bin Makefile
-	cat stage1.bin stage2.bin > boot.img
-	@echo "size of the second stage bootloader is" `$(STAT) -c "%s" boot.img`
+secondStage=second_stage
 
-run: boot.img
-	@qemu-system-i386 -net none -drive file=boot.bin,index=0,media=disk,format=raw
+#_________________________________________________________/ Assembler Options |
+assembler=nasm
 
-dump: stage1.bin stage2.bin
-	@echo "Hexdump of the first stage of the bootloader."
-	@hexdump stage1.bin
-	@echo "Hexdump of the second stage of the bootloader."
-	@hexdump stage2.bin
-	@echo "Hexdump of the bootable image."
-	@hexdump boot.img
-
-debug: stage1.bin
-	@qemu-system-i386 -net none -s -S -boot a -drive file=boot.img,index=0,media=disk,format=raw & gdb -q
-
-clean:
-	rm -f stage1.bin
-	rm -f stage2.bin
-	rm -f boot.img
+#___________________________________________________________/ Compile Options |

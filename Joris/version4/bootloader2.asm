@@ -7,7 +7,7 @@
 ;   A simple bootloader that shows an menu and and allows the user to choose an option from the menu.
 ;
 bits    16                  ; Configure NASM for Real Mode.
-org     0x7C00              ; Set program output offset at 0x7C00.
+org     0              ; Set program output offset at 0x7C00.
 jmp     initaite
 
 %include "utils.asm"
@@ -20,13 +20,9 @@ initaite:; Initiate the program
     mov sp, 0x7C00          ; Point the top of the stack at address 0x7C00.
 
     defstr message, "Hello world, my name is bootloader"
-
     println message
-
     cli
     hlt
-
-
 
 times 510-($-$$) db 0 ; Pad the rest of the first boot sector with zeros.
 dw 0xAA55 ; Mark this sector as bootable with black magic.

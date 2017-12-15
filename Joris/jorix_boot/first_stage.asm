@@ -27,12 +27,9 @@
 ;   devices that use the FAT12 (File Allocation Table) filesystem. This enables it to locate and eventually start      ;
 ;   the second part of the bootloader.                                                                                 ;
 ;                                                                                                                      ;
-
 bits 16     ; Configure the assembler to assemble into 16 bit instructions (For 16 bit real-mode)
-org 0       ; Start outputting at instructions at 0 (We will use
-
-start:jmp main    ; Jump to the initiation function that loads the second loader.
-
+2
+start: jmp startFirstStage    ; Jump to the initiation function that loads the second loader.
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
 ;   The BPB (BIOS Parameter Block) is the data structure that describes the the physical layout of the
@@ -45,7 +42,7 @@ bpbReservedSectors: 	dw 1            ; The amount of sectors that are not part o
 bpbNumberOfFATs: 	    db 2            ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
 bpbRootEntries: 	    dw 224          ; The maximum amount of entries in the root directory.
 bpbTotalSectors: 	    dw 2880         ; The amount of sectors that are present on the floppy disk.
-bpbMedia: 	            db 0b11110000   ; Media description settings:
+bpbMedia: 	            db 0b11111000   ; Media description settings:
                                         ; single sided, 9 sectors per FAT, 80 tracks, and not removable
                                         ; Explanation of the bits in the entry:
                                         ; Bit 0: Sides/Heads    = 0 if it is single sided, 1 if its double sided
@@ -169,7 +166,7 @@ convertLbaToChs:
 ;   This is the entry point of the stage bootloader. It will initiate the memory segments and stack, Then it executes
 ;   the routines that prepare the system for the booting the kernel.
 ;
-main:
+startFirstStage:
     ; Set the starting point of the code
     cli             ; Disable all hardware interrupts.
     mov ax, 0x7c0   ; Define the address of where the code should start.

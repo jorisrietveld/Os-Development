@@ -2,16 +2,18 @@
 
 ### GPR General Purpose Registers - 16 bit
 
-|**Register**|**Name**|**Description**|
-|-----------:|-------:|--------------:|
-|   AX       |Accumilator Register      |Used in arithmetic operations.|
-|   CX       |Counter Register          |Used in shift/rotate instructions and loops.|
-|   DX       |Data Register             |Used in arithmetic oparations and I/O operations.|
-|   BX       |Base Register             |Used as a pointer to data (located in segment regiser DS, when in segmented mode).|
-|   SP       |Stack Pointer Register    |Pointer to the top of the stack.|
-|   SB       |Stack Base Pointer Regiser|Pointer to the base of the stack.|
-|   SI       |Source Index Register     |Used as a pointer to a source in stream operations.|
-|   DI       |Destination Index Register|Used as a pointer to a destination in stream operations.|
+
+
+| **Register** |                   **Name** |                                                                    **Description** |
+|-------------:|---------------------------:|-----------------------------------------------------------------------------------:|
+|           AX |       Accumilator Register |                                                     Used in arithmetic operations. |
+|           CX |           Counter Register |                                       Used in shift/rotate instructions and loops. |
+|           DX |              Data Register |                                  Used in arithmetic oparations and I/O operations. |
+|           BX |              Base Register | Used as a pointer to data (located in segment regiser DS, when in segmented mode). |
+|           SP |     Stack Pointer Register |                                                   Pointer to the top of the stack. |
+|           SB | Stack Base Pointer Regiser |                                                  Pointer to the base of the stack. |
+|           SI |      Source Index Register |                                Used as a pointer to a source in stream operations. |
+|           DI | Destination Index Register |                           Used as a pointer to a destination in stream operations. |
 
 ### The register build up
 _This table shows the names of the registers and how they are build up. notice that the 16 bit register

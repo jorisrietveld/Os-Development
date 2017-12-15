@@ -52,15 +52,15 @@
         or al, al       ; logical or on al register, are there we done printing characters?
         jz .print_nl    ; Then return to the main routine.
 
-        mov ah, 0x0E    ; Otherwise fetch an new character.
+        mov ah, 0x0E    ; Load an shift out character.
         int 0x10        ; And print the character to the screen with an BIOS interrupt.
         jmp .print_char ; Go the the next character.
 
     .print_nl:
-        mov ax 0x0E0D   ; Set ascii shift out character + Set ascii caret return character.
+        mov ax 0x0E0D   ; Set ascii shift out character + Set ascii carriage return character.
         int 0x10        ; And print the character to the screen with an BIOS interrupt.
-        mov al, 0x0A    ; Set ascii caret new line feed character.
-        int 0x10        ; And print the character to the screen with an BIOS interrupt.]
+        mov al, 0x0A    ; Set ascii new line feed character.
+        int 0x10        ; And print the character to the screen with an BIOS interrupt.
         jmp .return     ; Done, so return.
 
     .return:
@@ -78,5 +78,8 @@
   %1 db %2, 0         ; declare the string
   %1_after_def:       ; continue on
 %endmacro
+
+
+
 
 %endif
