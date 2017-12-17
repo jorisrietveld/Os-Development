@@ -19,7 +19,7 @@ assemble: $(BASE_NAME).asm ## Assemle the code to binary instuctions.
 link: $(BASE_NAME).o ## Assemle the code to binary instuctions.
 	@echo  " \nLinking Binary..."
 	@ld -o $(NAME_EXECUTABLE) $(NAME_ELF).o
-	@echo  "\t  \e[92m Successfully linked $(BASE_NAME).0 to $(NAME_EXECUTABLE). \e[97m"
+	@echo  "\t  \e[92m Successfully linked $(BASE_NAME).o to $(NAME_EXECUTABLE). \e[97m"
 
 run: $(NAME_EXECUTABLE) ## Run the compiled binary.
 	@echo "\n\e[44m Exectuting the program:\e[49m"

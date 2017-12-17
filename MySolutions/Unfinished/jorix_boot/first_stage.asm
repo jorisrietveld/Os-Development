@@ -28,8 +28,9 @@
 ;   the second part of the bootloader.                                                                                 ;
 ;                                                                                                                      ;
 bits 16     ; Configure the assembler to assemble into 16 bit instructions (For 16 bit real-mode)
-2
-start: jmp startFirstStage    ; Jump to the initiation function that loads the second loader.
+
+jmp short startFirstStage   ; Jump to the initiation function that loads the second loader.
+nop                         ; Padding to align the bios parameter block.
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
 ;   The BPB (BIOS Parameter Block) is the data structure that describes the the physical layout of the
@@ -42,7 +43,7 @@ bpbReservedSectors: 	dw 1            ; The amount of sectors that are not part o
 bpbNumberOfFATs: 	    db 2            ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
 bpbRootEntries: 	    dw 224          ; The maximum amount of entries in the root directory.
 bpbTotalSectors: 	    dw 2880         ; The amount of sectors that are present on the floppy disk.
-bpbMedia: 	            db 0b11111000   ; Media description settings:
+bpbMedia: 	            db 0b11110000   ; Media description settings:
                                         ; single sided, 9 sectors per FAT, 80 tracks, and not removable
                                         ; Explanation of the bits in the entry:
                                         ; Bit 0: Sides/Heads    = 0 if it is single sided, 1 if its double sided
@@ -55,9 +56,8 @@ bpbSectorsPerTrack: 	dw 18           ; The amount of sectors after each other on
 bpbHeadsPerCylinder: 	dw 2            ; The amount of reading heads above each other on the floppy disk.
 bpbHiddenSectors: 	    dd 0            ; The amount of sectors between the physical start of the disk
                                         ; and the start of the volume.
-bpbTotalSectorsBig:     dd 0            ;
+bpbTotalSectorsBig:     dd 0            ; The total amount of lage sectors.
 bsDriveNumber: 	        db 0            ; 0 because this is the standard for floppy disks.
-bsUnused: 	            db 0            ; We are using everything on the floppy disk.
 bsExtBootSignature: 	db 0x29         ; The boot signature of: MS/PC-DOS Version 4.0
 bsSerialNumber:	        dd 0xDEADC0DE   ; This gets overwritten every time the image get written.
 bsVolumeLabel: 	        db "JORUX OS   "; The label of the volume.

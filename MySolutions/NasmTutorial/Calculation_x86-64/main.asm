@@ -3,6 +3,7 @@
 ;   Created: 17-12-2017 00:50
 ;
 ;   Description:
+;   This files shows an simple calculation using x86-64 assembler.
 
 ;_________________________________________________________________________________________________________/ Data Section
 ;   This section is used to define immutable data like constants, buffer sizes, file names etc. This data should not
