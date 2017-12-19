@@ -31,7 +31,7 @@
 ;                                                                                                                      ;
 bits 16     ; Configure the assembler to assemble into 16 bit instructions (For 16 bit real-mode)
 
-jmp start_bootstrapping     ; Jump to the initiation function that loads the second loader.
+jmp short start_bootstrapping     ; Jump to the initiation function that loads the second loader.
 nop                         ; Padding to align the bios parameter block.
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
@@ -45,7 +45,7 @@ bpbReservedSectors  	dw 1            ; The amount of sectors that are not part o
 bpbNumberOfFATs  	    db 2            ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
 bpbRootEntries  	    dw 224          ; The maximum amount of entries in the root directory.
 bpbTotalSectors  	    dw 2880         ; The amount of sectors that are present on the floppy disk.
-bpbMedia  	            db 0b11110000   ; Media description settings:
+bpbMedia  	            db 0x0F0   ; Media description settings:
                                         ; single sided, 9 sectors per FAT, 80 tracks, and not removable
                                         ; Explanation of the bits in the entry:
                                         ; Bit 0: Sides/Heads    = 0 if it is single sided, 1 if its double sided
@@ -60,32 +60,10 @@ bpbHiddenSectors  	    dd 0            ; The amount of sectors between the physi
                                         ; and the start of the volume.
 bpbTotalSectorsBig      dd 0            ; The total amount of lage sectors.
 bsDriveNumber  	        db 0            ; 0 because this is the standard for floppy disks.
-bsExtBootSignature  	db 0x29         ; The boot signature of: MS/PC-DOS Version 4.0
-bsSerialNumber 	        dd 0xDEADC0DE   ; This gets overwritten every time the image get written.
+bsExtBootSignature  	db 41         ; The boot signature of: MS/PC-DOS Version 4.0
+bsSerialNumber 	        dd 00000000h   ; This gets overwritten every time the image get written.
 bsVolumeLabel  	        db "JORUX OS   "; The label of the volume.
 bsFileSystem  	        db "FAT12   "   ; The type of file system.
-
-printString:
-    pusha   ; Save the current registers states of the CPU before altering them in this function.
-
-    .print_character:
-        ; Load Data segment Byte
-        lodsb       ; Load byte from string addressed by DS:SI to the ax low register. The Direction Flag is clear so SI
-                    ; (source index) is incremented so we can get the next character if we need to print more characters.
-        or al, al   ; Do fast logical OR on the low byte of the accumulator low byte (containing an char of the string)
-        jz .return  ; Done printing, the if the loaded byte contains an zero the or will set the zero flag.
-
-        mov ah, 0x0e; Set the ASCII SO (shift out) character to the high byte of the accumulator.
-        int 0x10    ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the
-                    ; accumulator register contains an ASCII SO character this will determine the video function to
-                    ; perform. The low byte contains the argument of that function (a character), so combined it will
-                    ; shift out(ah) the character stored in al.
-        jmp .print_character ; Finished printing this character move to the next.
-
-    .return:
-        popa    ; Restore the state of the CPU registers to before executing this function.
-        ret     ; The string is printed and the registers are restored so go back to the caller.
-
 
 start_bootstrapping:
     mov ax, 0x07c0  ; This is for calculating where to put the stack. Set it 4k above the buffer.
@@ -270,27 +248,41 @@ lba_to_hts:         ; IN: logical sector in AX, OUT: correct registers for int 1
 	push ax
 	mov bx, ax      ; Save logical sector
 
-	mov dx, 0       ; First the sector
+	mov dx, 0  ; First the sector
 	div word [bpbSectorsPerTrack]
-	add dl, 01h     ; Physical sectors start at 1
+	add dl, 0x01     ; Physical sectors start at 1
 	mov cl, dl      ; Sectors belong in CL for int 13h
 	mov ax, bx
-
 	mov dx, 0       ; Now calculate the head
 	div word [bpbSectorsPerTrack]
 	mov dx, 0
-	div word [Sides]
+	div word [bpbHeadsPerCylinder]
 	mov dh, dl      ; Head/side
 	mov ch, al      ; Track
-
 	pop ax
 	pop bx
-
 	mov dl, byte [bootdev]  ; Set correct device
-
 	ret
+print_string:
+    pusha   ; Save the current registers states of the CPU before altering them in this function.
 
+    .print_character:
+        ; Load Data segment Byte
+        lodsb       ; Load byte from string addressed by DS:SI to the ax low register. The Direction Flag is clear so SI
+                    ; (source index) is incremented so we can get the next character if we need to print more characters.
+        or al, al   ; Do fast logical OR on the low byte of the accumulator low byte (containing an char of the string)
+        jz .return  ; Done printing, the if the loaded byte contains an zero the or will set the zero flag.
 
+        mov ah, 0x0e; Set the ASCII SO (shift out) character to the high byte of the accumulator.
+        int 0x10    ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the
+                    ; accumulator register contains an ASCII SO character this will determine the video function to
+                    ; perform. The low byte contains the argument of that function (a character), so combined it will
+                    ; shift out(ah) the character stored in al.
+        jmp .print_character ; Finished printing this character move to the next.
+
+    .return:
+        popa    ; Restore the state of the CPU registers to before executing this function.
+        ret     ; The string is printed and the registers are restored so go back to the caller.
 
 
 stage2_file_name db "STAGE2  BIN"
@@ -302,7 +294,7 @@ cluster	dw 0 	; Cluster of the file we want to load
 pointer	dw 0 	; Pointer into Buffer, for loading kernel
 
 times 510-($-$$) db 0	; Pad remainder of boot sector with zeros
-dw 0AA55h		; Boot signature (DO NOT CHANGE!)
+dw 0x0AA55		; Bootable flag constant. If this constant is present at address 512 the bios marks the the sector as bootable.
 
 buffer:
 

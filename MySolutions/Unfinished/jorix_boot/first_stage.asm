@@ -29,7 +29,7 @@
 ;                                                                                                                      ;
 bits 16     ; Configure the assembler to assemble into 16 bit instructions (For 16 bit real-mode)
 
-jmp short startFirstStage   ; Jump to the initiation function that loads the second loader.
+jmp startFirstStage   ; Jump to the initiation function that loads the second loader.
 nop                         ; Padding to align the bios parameter block.
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:                                                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
@@ -336,7 +336,7 @@ executeNextStage:
 ;   (｡◕‿◕｡)⊃━☆ﾟ.*･｡ﾟ Happy debugging ԅ(≖‿≖ԅ)
 ;
 failure:
-    mov si, msgNewLine      ; todo: remove this with my println macro
+    mov si, msgFailure      ; todo: remove this with my println macro
     call printString        ;
     xor ah, ah              ; Set 0 to the ax high byte as function.
     int 0x16                ; Execute an BIOS interrupt that:
@@ -351,9 +351,9 @@ absoluteTrack   db 0x00
 
 datasector  dw 0x0000
 cluster     dw 0x0000
-imageName   db "KRNLDR   SYS"
+imageName   db "STAGE2  BIN"
 
-msgLoading  db "Loading boot image", 0
+msgLoading  db "Loading boot pizza", 0
 msgNewLine  db 0x0A, 0x0D
 msgProgress db ".", 0
 msgFailure  db "Error: press any key to destroy your computer."
