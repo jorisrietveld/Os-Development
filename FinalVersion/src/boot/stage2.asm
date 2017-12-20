@@ -1,5 +1,5 @@
-;                                                                                       ,   ,           ( VERSION 0.0.1
-;                                                                                         $,  $,     ,   `̅̅̅̅̅̅( 0x001
+;                                                                                       ,   ,           ( VERSION 0.0.2
+;                                                                                         $,  $,     ,   `̅̅̅̅̅̅( 0x002
 ;                                                                                         "ss.$ss. .s'          `̅̅̅̅̅̅
 ;   MMMMMMMM""M MMP"""""YMM MM"""""""`MM M""M M""MMMM""M                          ,     .ss$$$$$$$$$$s,
 ;   MMMMMMMM  M M' .mmm. `M MM  mmmm,  M M  M M  `MM'  M                          $. s$$$$$$$$$$$$$$`$$Ss
@@ -18,68 +18,65 @@
 ;   ___________________[ Licence ]______________________                             $$"  "$"$$$$$$$$$$$$$$$$$$$$S""""'
 ;             General Public licence version 3                                  ,   ,"     '  $$$$$$$$$$$$$$$$####s
 ;   ===============================================================================================================    ;
-;                                                                                            First Stage Bootloader    ;                                                                                                                     ;
-;   Description:                                                                             ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅    ;
+;                                                                                           Second Stage Bootloader    ;                                                                                                                     ;
+;   Description:                                                                            ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅    ;
 ;   This file contains the second stage of the bootloader. Because of the memory size constrains of only 512 bytes,    ;
 ;   we have split the bootloader into two stages. One for setting up the minimal requirements of the system and a      ;
 ;   second one that can switch the CPU into protected mode and knows how to locate and start the operating system.     ;
 ;   This file contains the second stage that is responsible for loading the kernel. It contains both 16 bit and 32     ;
-;   bit assembler code because it will switch the CPU from 16 bit (Keep it) real mode to 32 bit protected mode.        ;
-;
-;   _______C______________[ File  ]________________                                     ;
-;   Created: 13-11-2017 21:40   Altered: 11-12-2017 20:11
-;
-;
-;   Description:
-;   This file contains the second stage of the bootloader. This code gets
-;   executed by the fist stage bootloader located in the first sector of the
-;   disk. This stage of the bootloader is responsible for loading the kernel
-;   of Jorix OS.
-;
-org 0x00    ; Offset to address 0
+;   bit assembler code because it will switch the CPU from 16 bit real mode to 32 bit protected mode.                  ;
+;                                                                                                                      ;
+;   Created: 13-11-2017 21:40       Altered: 20-12-2017 00:29                                                          ;
+;                                                                                                                      ;
+
+org 0x500    ; Offset to address 0
 bits 16     ; Assemble to 16 bit instructions (For 16 bit real-mode)
 jmp main    ; Jump to the main label.
 
-;
-; Prints a string to the screen.
-;
-print:
-    pusha   ; Save the current state of the CPU registers to the stack.
+%include "stdio.asm"
+%include "gdt.asm"
 
-    .print_character:   ; Routine to load and print a character.
-        lodsb       ; Load 1 byte from the source index to ax low register (al), so we can print it with an bios interrupt.
-        or al, al   ; Check if the ax low contains an 0 byte, if so the zero flag gets set by the or operation.
-                    ; Remember that we use an 0 byte to terminate a string, so if al contains a 0 it means the end of a string.
-        jz .return  ; Jump to the return routine if the zero flag is set.
-        mov ah, 0x0E; Set the ax high byte to the ASCII Control: shift out character, this is the function the BIOS interrupt executes.
-        int 0x10    ; Fire an BIOS video service interrupt that takes ah as function and al as argument. So it will print al to the screen.
-        jmp .print_character ; Jump back to the top to load and print the next character.
-
-    .return:    ; When all characters of the string are printed restore the CPU registers and return to caller.
-        popa    ; Restore the registers to the previous state (that we stored on the stack)
-        ret     ; Return to the caller of this function.
-;
-; This is the entry point of the second stage bootloader.
+;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
+;   Description:
+;   The third stage of the bootloader, this stage executes after the CPU has switch to 32 bits protected mode. It is
+;   important to remember that it is not allowed to use BIOS interrupts, it will cause a tipple fault on the CPU that
+;   will crash the computer.
 ;
 main:
-    cli     ; clear the interrupts
-    push cs ; DS=CS
-    pop ds  ;
+    cli             ; clear the interrupts to prevent the CPU from tipple faulting while moving the segments.
+    xor ax, ax      ; Clear the accumulator.
+    mov ds, ax      ; Move the data segment to location 0.
+    mov es, ax      ; Move the extra segment to location 0.
+    mov ax, 0x9000  ; Set the the location to place the stack segment.
+    mov ss, ax      ; Actually move the stack segment.
+    mov sp, 0xFFFF  ; Set the base of the stack at 0xFFFF (grows down to 0x9000).
+    sti             ; Re-enable the interrupts.
+    println msg_switch
+    call InstallGDT ; Install the global descriptor table in the GDTR of the CPU.
+    cli             ; Disable the interrupts because they will tipple fault the CPU in protected mode.
+    mov eax, cr0    ; Get the value of the control register and copy it into eax.
+    or eax, 1       ; Alter the protected mode enable bit, set it to 1 so the CPU switches to it.
+    mov cr0, eax    ; Copy the altered value with protected mode enabled back into the control register effectively switching modes.
+    jmp 0x08:proteded_start     ; Jump to label that configures the CPU for 32 bits protected mode.
 
-    mov si, message ; Move the address of the welcome message to the source index register.
-    call print      ; Print the stored message to the screen.
-    cli     ; Clear the interrupts.
-    hlt     ; Halt the execution.
-;
-; Some string constants.
-; Info:
-; 0x0D is the ASCII Control CR (Carriage Return) character, this moves the carriage to the beginning of the line.
-; 0x0A is the ASCII Control NL (New Line feed) character, this moves the carriage to the next line.
-;
-message: db "Preparing to load the Jorix OS...", 0x0D, 0x0A, 0 ;
-;__________________________________________________________________________________________/ stage2.asm.asm
-;   Author: Joris Rietveld  <jorisrietveld@gmail.com>
-;   Created: 18-12-2017 15:47
-;   
+; String constants
+ defstr msg_switch, "Switching the CPU into protected mode..."
+;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:
+;   The third stage of the bootloader, this stage executes after the CPU has switch to 32 bits protected mode. It is
+;   important to remember that it is not allowed to use BIOS interrupts, it will cause a tipple fault on the CPU that
+;   will crash the computer.
 ;
+bits 32 ; Configure the assembler to assemble into 32 bit machine instructions.
+
+proteded_start:
+    mov ax, 0x10    ; Set the starting address of the segments.
+    mov ds, ax      ; Move the data segment to the address 0x10.
+    mov ss, ax      ; Move the stack segment to the address 0x10.
+    mov es, ax      ; Move the extra segment to the address 0x10.
+    mov esp, 0x9000 ; Move the top of the stack to location 0x9000.
+
+stop: ; Halt and catch fire...
+    cli
+    hlt
+

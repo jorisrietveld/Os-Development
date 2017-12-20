@@ -16,14 +16,14 @@ STAGE2_NAME=stage2              # The kernel loader.
 #   an floppy image with 1.44 MB storage.
 #
 notify_error(){
-    echo "\e[91m[!] - $1\e[39m"
+    echo "\e[91m ✗ $1\e[39m"
     exit
 }
 notify(){
-    echo "\e[49m> $1\e[39m"
+    echo "\e[49m ► $1\e[39m"
 }
 notify_success(){
-    echo "\e[92m[v] - $1\e[39m"
+    echo "\e[92m ✓ $1\e[39m"
 }
 
 print_fancy(){
@@ -46,7 +46,6 @@ if test "`whoami`" != "root" ; then
 	exit
 else
     print_fancy mono12 "Jorix OS"
-    print_fancy pagga "Building System"
     #toilet -t -W  -f mono12 -F gay:border "Jorix OS"
     #toilet -t -f pagga -F gay:border "Building System"
 fi
@@ -61,7 +60,7 @@ then
 	mkdosfs -C ${DISK_IMG_DIR}${IMAGE_NAME}.flp 1440 || exit
 	chown ${USER_UNPRIVILEGED} ${DISK_IMG_DIR}${IMAGE_NAME}.flp
 	chmod 777 ${DISK_IMG_DIR}${IMAGE_NAME}.flp
-	notify_success "successfully created the floppy image: ${DISK_IMG_DIR}${IMAGE_NAME}.flp"
+	notify_success "successfully created the floppy image: ${DISK_IMG_DIR}${IMAGE_NAME}.flp\n"
 fi
 
 #________________________________________________________________________________________________________________________/ Compile assembly files.
@@ -70,17 +69,19 @@ fi
 #
 notify "Compiling all assembly files..."
 notify "Assembling the first stage of the bootloader..."
-nasm -O0 -w+orphan-labels -f bin -o src/boot/${BOOTSTRAP_NAME}.bin src/boot/${BOOTSTRAP_NAME}.asm || exit
-chown ${USER_UNPRIVILEGED} src/boot/${BOOTSTRAP_NAME}.bin
-chmod 777 src/boot/${BOOTSTRAP_NAME}.bin
-notify_success "successfully assembled the first stage of the bootloader to an binary: src/boot/${BOOTSTRAP_NAME}.bin"
+cd ./src/boot/
+nasm -O0 -w+orphan-labels -f bin -o ${BOOTSTRAP_NAME}.bin ${BOOTSTRAP_NAME}.asm || exit
+chown ${USER_UNPRIVILEGED} ${BOOTSTRAP_NAME}.bin
+chmod 777 ${BOOTSTRAP_NAME}.bin
+notify_success "successfully assembled the first stage of the bootloader to an binary: ${BOOTSTRAP_NAME}.bin"
 
 notify "Assembling the second stage of the bootloader..."
-nasm -O0 -w+orphan-labels -f bin -o src/boot/${STAGE2_NAME}.bin src/boot/${STAGE2_NAME}.asm || exit
-chown ${USER_UNPRIVILEGED} src/boot/${STAGE2_NAME}.bin
-chmod 777 src/boot/${STAGE2_NAME}.bin
-notify_success "successfully assembled the second stage of the bootloader to an binary: src/boot/${STAGE2_NAME}.bin"
-notify_success "Done assembling files."
+nasm -O0 -w+orphan-labels -f bin -o ${STAGE2_NAME}.bin ${STAGE2_NAME}.asm || exit
+chown ${USER_UNPRIVILEGED} ${STAGE2_NAME}.bin
+chmod 777 ${STAGE2_NAME}.bin
+notify_success "successfully assembled the second stage of the bootloader to an binary: ${STAGE2_NAME}.bin"
+notify_success "Done assembling files.\n"
+cd ../../
 
 #________________________________________________________________________________________________________________________/ Install bootloader
 #   Copy the first stage of the bootloader to the floppy image.
@@ -93,12 +94,12 @@ notify_success "Successfully copied the bootloader to the floppy image: ${DISK_I
 #   Copy the second stage of the bootloader to the floppy image. It does this by mounting the floppy image virtually to
 #   an temporary location and just coping the binaries to it.
 #
-notify "Creating and mounting the floppy image as an loop-back device."
+notify "Creating and mounting the floppy image as an loop-back device..."
 rm -rf /tmp/tmp-floppy-loop || exit
 mkdir /tmp/tmp-floppy-loop && mount -o loop -t vfat ${DISK_IMG_DIR}${IMAGE_NAME}.flp /tmp/tmp-floppy-loop || exit
 notify_success "Successfully mounted the floppy to /tmp/tmp-floppy-loop"
 
-notify "Coping the second stage loader, kernel and programs on to the virtual floppy."
+notify "Coping the second stage loader, kernel and programs on to the virtual floppy..."
 cp "src/boot/${STAGE2_NAME}.bin" /tmp/tmp-floppy-loop || exit
 notify_success "Successfully copied the second stage loader /tmp/tmp-floppy-loop"
 sleep 0.2
@@ -114,12 +115,23 @@ notify_success "Done.\n"
 #   Copy the second stage of the bootloader to the floppy image. It does this by mounting the floppy image virtually to
 #   an temporary location and just coping the binaries to it.
 #
-notify "> Creating CD ISO image..."
+notify "Creating CD ISO image..."
 rm -f ${DISK_IMG_DIR}${IMAGE_NAME}.iso
 genisoimage -quiet -V 'JORIXOS' -input-charset iso8859-1 -o ${DISK_IMG_DIR}${IMAGE_NAME}.iso -b ${IMAGE_NAME}.flp ${DISK_IMG_DIR} || exit
 chown ${USER_UNPRIVILEGED} disk_images/${IMAGE_NAME}.iso
 chmod 777 ${DISK_IMG_DIR}${IMAGE_NAME}.iso
-notify_success "> Successfully created an CD-ROM image: ${DISK_IMG_DIR}${IMAGE_NAME}.iso"
+notify_success "Successfully created an CD-ROM image: ${DISK_IMG_DIR}${IMAGE_NAME}.iso"
 
-print_fancy pagga "Done, use run.sh to start the os."
+print_fancy pagga "Done building!"
+
+#________________________________________________________________________________________________________________________/ Start the OS ?
+#   If the user wants it, boot the os with qemu
+#
+notify "Do you want to start Jorix os? [Y/n]"
+read  answer
+if echo "$answer" | grep -iq "^y" ;then
+    qemu-system-i386 -net none -fda ${DISK_IMG_DIR}${IMAGE_NAME}.flp -boot a
+else
+    notify_success "Okey, you can also run it with run.sh"
+fi
 
