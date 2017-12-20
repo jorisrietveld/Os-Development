@@ -127,7 +127,12 @@ print_fancy pagga "Done building!"
 #________________________________________________________________________________________________________________________/ Start the OS ?
 #   If the user wants it, boot the os with qemu
 #
-notify "Do you want to start Jorix os? [Y/n]"
+if which ponysay >/dev/null ; then
+	ponysay "Done building, do you want to start Jorix OS? [Y/n]"
+else
+        echo "Done building, do you want to start Jorix OS? [Y/n]"
+fi
+# Wait for the user to decide if he want to run the build operation system.
 read  answer
 if echo "$answer" | grep -iq "^y" ;then
     qemu-system-i386 -net none -fda ${DISK_IMG_DIR}${IMAGE_NAME}.flp -boot a

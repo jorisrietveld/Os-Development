@@ -51,6 +51,7 @@ main:
     mov ss, ax      ; Actually move the stack segment.
     mov sp, 0xFFFF  ; Set the base of the stack at 0xFFFF (grows down to 0x9000).
     sti             ; Re-enable the interrupts.
+    defstr msg_switch, "Switching the CPU into protected mode..."
     println msg_switch
     call InstallGDT ; Install the global descriptor table in the GDTR of the CPU.
     cli             ; Disable the interrupts because they will tipple fault the CPU in protected mode.
@@ -60,7 +61,7 @@ main:
     jmp 0x08:proteded_start     ; Jump to label that configures the CPU for 32 bits protected mode.
 
 ; String constants
- defstr msg_switch, "Switching the CPU into protected mode..."
+
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:
 ;   The third stage of the bootloader, this stage executes after the CPU has switch to 32 bits protected mode. It is
