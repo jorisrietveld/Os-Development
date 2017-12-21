@@ -32,37 +32,94 @@
 ;                                                                                                                      ;
 ;   Created: 21-12-2017 00:16                                                                                          ;
 ;                                                                                                                      ;
+%ifndef A20_ENABLE_DISABLE_32
+%define A20_ENABLE_DISABLE_32
+
+;_________________________________________________________________________________________________________________________/ A20 Wait keyboard output
 enable_A20:
-    pusha
+    pusha   ; Store all current CPU registers to the stack so we can restore them after the execution of this function.
+    cli     ; Disable hardware interrupts that could triple fault the CPU.
 
-    .read_output:
-        mov al, 0xD0        ; Set read output port command to low bit of ax.
-        out 0x64, al        ; Write command to keyboard output port.
-        call .wait_input    ; Wait for an response from the keyboard controller.
+    ;_____________ A20 With Keyboard out __________________
+    ; Enable A20 with the keyboard output port. (default)
+    .with_keyboard_output:
+        call A20_wait_input
+        mov al, 0xAD
+        out 0x64, al
+        call A20_wait_input
 
-        in al, 0x60         ; Read from the keyboard controller.
-        push eax            ; Save the value on the stack.
-        call .wait_input    ;
+        mov al, 0xD0
+        out 0x64, al
+        call A20_wait_output
+
+        in al, 0x60
+        push eax
+        call A20_wait_input
 
         mov al, 0xD1
         out 0x64, al
-        call .wait_input
+        call A20_wait_input
 
-    .wait_input:
-        in al, 0x64     ; Read from keyboard status register
-        test al, 0x02   ; Test if bit 2 is set in the status register.
-            ; Bit   Description
-            ; 0     Output buffer status ready, 0 the buffer is empty and 1 the buffer is filled.
-            ; 1     Input buffer full, 0 ready to be written and 1 full do not write to it.
-            ; 2     System flag, 0 is set after an power on reset and 1 after completing an successful BAT test.
-            ; 3     command data, 0 last write to input buffer was data (port 0x60), 1 last was a command (port 64)
-            ; 4     keyboard locked, 0 locked, 1 not locked and 2 means you broke math, great
-            ; 5     Auxiliary output buffer full
-            ; 6     Timeout, 0 ok flag and 1 means a time out.
-            ; 7     Parity error, 0 ok flag (no errors), 1 PARTY!(parity) error with the last bytes.
-        jnz .wait_input
+        pop eax
+        or al, 0x02
+        out 0x60, al
 
+        call A20_wait_input
+        mov al, 0xAE
+        out 0x64, al
 
-mov al, 0xD0
-out 0x064
-call wait_output
+        call A20_wait_input
+        jmp .return
+
+    ;___________ A20 With keyboard controller _______________
+    ; Enable A20 with keyboard controller
+    .with_keyboard_controller:
+        mov al, 0xDD
+        out 0x64, al
+        jmp .return
+
+    ;_____________ A20 With BIOS interrupt __________________
+    ; Enable A20 with an BIOS interrupt call.
+    .with_BIOS:
+        mov ax, 0x2401
+        int 0x15
+        jmp .return
+
+    ;_____________ A20 With system control __________________
+    ; Enable A20 with the system control register.
+    .with_system_control_a:
+        mov al, 0x02
+        out 0x92
+        jmp .return
+
+    ;___________________ loopFilename _______________________
+    ; Restore the CPU register state and re-enable interrupts
+    .return:
+        sti
+        popa
+        ret
+;_________________________________________________________________________________________________________________________/ A20 Wait Keyboard input
+A20_wait_input:
+    in al, 0x64         ; Read from keyboard status register
+    test al, 0x02       ; Test if bit 2 is set in the status register. see [1] below for an detailed explanation.
+    jnz A20_wait_input ; The keyboard is not ready so wait till the head death of the universe.
+    ret
+;_________________________________________________________________________________________________________________________/ A20 Wait keyboard output
+A20_wait_output:
+    in al, 0x64
+    test al, 0x01
+    jz A20_wait_output
+    ret
+
+;_____________________________________________________________________________________/ [1] Keyboard Controller Status register
+; Bit   Description
+; 0     Output buffer status ready, 0 the buffer is empty and 1 the buffer is filled.
+; 1     Input buffer full, 0 ready to be written and 1 full do not write to it.
+; 2     System flag, 0 is set after an power on reset and 1 after completing an successful BAT test.
+; 3     command data, 0 last write to input buffer was data (port 0x60), 1 last was a command (port 64)
+; 4     keyboard locked, 0 locked, 1 not locked and 2 means you broke math, great
+; 5     Auxiliary output buffer full
+; 6     Timeout, 0 ok flag and 1 means a time out.
+; 7     Parity error, 0 ok flag (no errors), 1 PARTY!(parity) error with the last bytes.
+
+%endif
