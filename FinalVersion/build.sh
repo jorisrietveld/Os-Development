@@ -1,16 +1,27 @@
 #!/bin/sh
+PROJECT_ROOT="`pwd`" # DANGEROUS, USED WITH: rm -rf and dd, IF SET WRONG LIKE AN / WITH SPACE WILL ALL YOUR DATA
 #________________________________________________________________________________________________________________________/ Options
 #   Check if there is an floppy image that can be used to write the operating system to. If it isn't is will create
 #   an floppy image with 1.44 MB storage.
-#
-IMAGE_NAME=JorixOS              # The name of the disk images.
-USER_UNPRIVILEGED=joris:joris   # The name of the non root user to alter the privileges on the created files.
-DISK_IMG_DIR=disk_images/       # The directory containing the output
+
+ # The name of the disk images.
+IMAGE_NAME=JorixOS
+
+# The name of the non root user to alter the privileges on the created files.
+USER_UNPRIVILEGED=joris
+
+# The directory containing bootable disk images.
+DISK_IMG_DIR="disk_images/"
+
+# If set to 1, it removes all compiler output except the images, 0 to leave them after building.
+CLEAN_AFTER_BUILD=0
 
 # You probably don't want to chance this.
-BOOTSTRAP_NAME=bootstrap        # The 512 byte bootstrap loader.
-STAGE2_NAME=stage2              # The kernel loader.
-
+BOOTSTRAP_NAME=bootstrap    # The 512 byte bootstrap loader.
+STAGE2_NAME=stage2          # The kernel loader.
+OUTPUT_PRIVILEGE_LEVEL=777  # File privileges on compiled binaries.
+OUTPUT_DIRECTORY="out/"     # Directory for the compiled binaries. Ignored when either CLEAN_AFTER_BUILD or OUTPUT_IN_SOURCE_DIR is set to 1.
+OUTPUT_IN_SOURCE_DIR=1      # Place the compiled binaries in the same directory as the source 1, use OUTPUT_DIR = 0
 #________________________________________________________________________________________________________________________/ Helper print functions
 #   Check if there is an floppy image that can be used to write the operating system to. If it isn't is will create
 #   an floppy image with 1.44 MB storage.
@@ -33,21 +44,17 @@ print_fancy(){
         echo $2
     fi
 }
+USER="$USER_UNPRIVILEGED"
 #________________________________________________________________________________________________________________________/ Check root
 #   Check if the executing user is root, this is needed to mount the loop-back device for creating the floppy image.
-#
 # Test if the user has root privileges, this is needed for creating the disk image.
 if test "`whoami`" != "root" ; then
     print_fancy smmono12 "You shall not pass!"
-	#toilet -t -f smmono12 -F gay:border You shall not pass!
 	notify_error "You have to have root privileges for building the operating system."
 	print_fancy pagga "Try again with god mode enabled."
-	#toilet -t -W -f pagga -F gay:border "Try again with god mode enabled"
 	exit
 else
     print_fancy mono12 "Jorix OS"
-    #toilet -t -W  -f mono12 -F gay:border "Jorix OS"
-    #toilet -t -f pagga -F gay:border "Building System"
 fi
 
 #________________________________________________________________________________________________________________________/ Make empty Floppy image
@@ -56,10 +63,10 @@ fi
 #
 if [ ! -e ${DISK_IMG_DIR}${IMAGE_NAME}.flp ]
 then
-	notify "> Creating new floppy image..."
-	mkdosfs -C ${DISK_IMG_DIR}${IMAGE_NAME}.flp 1440 || exit
-	chown ${USER_UNPRIVILEGED} ${DISK_IMG_DIR}${IMAGE_NAME}.flp
-	chmod 777 ${DISK_IMG_DIR}${IMAGE_NAME}.flp
+    notify "> Creating new floppy image..."
+    FLP_OUT="${PROJECT_ROOT}/${DISK_IMG_DIR}/${IMAGE_NAME}.flp"   # The absolute path + floppy_image.flp to be created.
+
+	sudo -u "${USER}" mkdosfs -C ${FLP_OUT} 1440 && chmod 777 ${FLP_OUT} || exit  # Create an floppy image of 1.44 MB
 	notify_success "successfully created the floppy image: ${DISK_IMG_DIR}${IMAGE_NAME}.flp\n"
 fi
 
@@ -69,17 +76,18 @@ fi
 #
 notify "Compiling all assembly files..."
 notify "Assembling the first stage of the bootloader..."
-cd ./src/boot/
-nasm -O0 -w+orphan-labels -f bin -o ${BOOTSTRAP_NAME}.bin ${BOOTSTRAP_NAME}.asm || exit
-chown ${USER_UNPRIVILEGED} ${BOOTSTRAP_NAME}.bin
-chmod 777 ${BOOTSTRAP_NAME}.bin
-notify_success "successfully assembled the first stage of the bootloader to an binary: ${BOOTSTRAP_NAME}.bin"
+cd ./src/boot/ || exit
 
-notify "Assembling the second stage of the bootloader..."
-nasm -O0 -w+orphan-labels -f bin -o ${STAGE2_NAME}.bin ${STAGE2_NAME}.asm || exit
-chown ${USER_UNPRIVILEGED} ${STAGE2_NAME}.bin
-chmod 777 ${STAGE2_NAME}.bin
-notify_success "successfully assembled the second stage of the bootloader to an binary: ${STAGE2_NAME}.bin"
+BOOT_OUT="${BOOTSTRAP_NAME}.bin"
+STG2_OUT="${STAGE2_NAME}.bin"
+
+sudo -u "${USER}" rm -rf ${BOOT_OUT} ${STG2_OUT} # First clean old binaries.
+
+sudo -u "${USER}" nasm -O0 -w+orphan-labels -f bin -o ${BOOT_OUT} ${BOOTSTRAP_NAME}.asm && chmod 777 ${BOOT_OUT} || exit
+notify_success "successfully assembled the first stage of the bootloader to an binary: ${BIN_OUT}.bin" && notify "Assembling the second stage of the bootloader..."
+sudo -u "${USER}" nasm -O0 -w+orphan-labels -f bin -o ${STG2_OUT} ${STAGE2_NAME}.asm && chmod 777 ${STG2_OUT} || exit
+
+notify_success "successfully assembled the second stage of the bootloader to an binary: ${BIN_OUT}.bin"
 notify_success "Done assembling files.\n"
 cd ../../
 
@@ -128,14 +136,15 @@ print_fancy pagga "Done building!"
 #   If the user wants it, boot the os with qemu
 #
 if which ponysay >/dev/null ; then
-	ponysay "Done building, do you want to start Jorix OS? [Y/n]"
+	echo  "Done building, do you want to start Jorix OS? [Y/n]"
 else
         echo "Done building, do you want to start Jorix OS? [Y/n]"
 fi
 # Wait for the user to decide if he want to run the build operation system.
 read  answer
 if echo "$answer" | grep -iq "^y" ;then
-    qemu-system-i386 -net none -fda ${DISK_IMG_DIR}${IMAGE_NAME}.flp -boot a
+   # qemu-system-i386  -net none -fda ${DISK_IMG_DIR}${IMAGE_NAME}.flp -boot a -format raw
+    qemu-system-i386 -enable-kvm -net none -fda ${DISK_IMG_DIR}${IMAGE_NAME}.flp
 else
     notify_success "Okey, you can also run it with run.sh"
 fi

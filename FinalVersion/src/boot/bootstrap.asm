@@ -160,8 +160,8 @@ loadRootDirectory:
 ;
 loadFAT:
     ; Firstly save the starting cluster of the boot image.
-    mov si, msgNewLine              ; Set the source pointer to the string to print. (Caret return, Line Feed)
-    call printString                ; print a new line.
+    ;mov si, msgNewLine              ; Set the source pointer to the string to print. (Caret return, Line Feed)
+    ;call printString                ; print a new line.
     mov dx, word[di+0x001A]         ; Get the value of the 26th bit of the entry. This contains the first cluster of the FAT.
     mov word[cluster], dx           ; Get the files first cluster.
 
@@ -177,8 +177,8 @@ loadFAT:
     mov bx, 0x0200                  ; Set the location to write the fat to.
     call readSectors                ; Copy the file allocation table above the boot code at address 7c00:0200
 
-    mov si, msgNewLine              ; Set the source pointer to the string to print.
-    call printString                ; print the string to notify the user
+    ;mov si, msgNewLine              ; Set the source pointer to the string to print.
+    ;call printString                ; print the string to notify the user
     mov ax, 0x0050                  ;
     mov es, ax                      ; The destination for the image
     mov bx, 0x0000                  ; The destination for the image
@@ -249,21 +249,6 @@ failure:
     int 0x16                ; Execute an BIOS interrupt that:
     int 0x19                ; Reset the system.
 
-;________________________________________________________________________________________________________________________/ § Variables
-;
-absoluteSector  db 0x00
-absoluteHead    db 0x00
-absoluteTrack   db 0x00
-
-datasector  dw 0x0000
-cluster     dw 0x0000
-imageName   db "STAGE2  BIN"
-
-msgLoading  db "Loading boot pizza", 0
-msgNewLine  db 0x0A, 0x0D
-msgProgress db ".", 0
-msgFailure  db "Error: press any key to destroy your computer."
-
 ;________________________________________________________________________________________________________________________/ ϝ printString
 ;   Description:
 ;   This function can be used to print an null terminated string to the screen using the BIOS Video service
@@ -327,8 +312,6 @@ readSectors:
         jnz .readAnSector               ; attempt to read again
         int 0x18                        ; Reset and try again.
     .readedSuccessfull:
-        mov si, msgProgress             ; Load a progress message to notify the user of an successful read.
-        call printString                ; Print the message to the screen.
         pop cx                          ; Restore the state of the cx register.
         pop bx                          ; Restore the state of the bx register.
         pop ax                          ; Restore the state of the ax register.
@@ -361,6 +344,19 @@ convertLbaToChs:
     mov byte[absoluteHead],dl
     mov byte[absoluteTrack],al
     ret
+
+;________________________________________________________________________________________________________________________/ § Variables
+;
+absoluteSector  db 0x00
+absoluteHead    db 0x00
+absoluteTrack   db 0x00
+datasector      dw 0x0000
+cluster         dw 0x0000
+imageName       db "STAGE2  BIN"
+msgLoading      db "Loading stage2...", 0
+msgNewLine      db 0x0A, 0x0D
+msgProgress     db ".", 0
+msgFailure      db "Error: press any key to destroy your computer."
 
 times 510-($-$$) db 0	; Pad remainder of boot sector with zeros
 dw 0x0AA55		; Bootable flag constant. If this constant is present at address 512 the bios marks the the sector as bootable.

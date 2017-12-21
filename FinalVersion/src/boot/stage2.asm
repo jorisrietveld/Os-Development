@@ -33,8 +33,8 @@ org 0x500    ; Offset to address 0
 bits 16     ; Assemble to 16 bit instructions (For 16 bit real-mode)
 jmp main    ; Jump to the main label.
 
-%include "stdio.asm"
-%include "gdt.asm"
+%include "./features/stdio16.asm"
+%include "./features/gdt.asm"
 
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:
@@ -53,6 +53,8 @@ main:
     sti             ; Re-enable the interrupts.
     defstr msg_switch, "Switching the CPU into protected mode..."
     println msg_switch
+    cli
+    hlt
     call InstallGDT ; Install the global descriptor table in the GDTR of the CPU.
     cli             ; Disable the interrupts because they will tipple fault the CPU in protected mode.
     mov eax, cr0    ; Get the value of the control register and copy it into eax.
