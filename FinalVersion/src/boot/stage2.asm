@@ -33,36 +33,49 @@ org 0x500    ; Offset to address 0
 bits 16     ; Assemble to 16 bit instructions (For 16 bit real-mode)
 jmp main    ; Jump to the main label.
 
-%include "./features/stdio16.asm"
-%include "./features/gdt.asm"
-
-;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
+%include "./libs/stdio.asm"
+%include "./libs/gdt.asm"
+%include "./libs/A20.asm"
+;________________________________________________________________________________________________________________________/ § data section
+msg_gdt     db "Installed GDT...", 0x0D, 0x0A, 0   ; Create an message.
+msg_a20     db "Enabled the A20 line...", 0x0D, 0x0A, 0   ; Create an message.
+msg_switch  db "Switching the CPU into protected mode...", 0x0D, 0x0A, 0   ; Create an message.
+;________________________________________________________________________________________________________________________/ § text section
 ;   Description:
-;   The third stage of the bootloader, this stage executes after the CPU has switch to 32 bits protected mode. It is
-;   important to remember that it is not allowed to use BIOS interrupts, it will cause a tipple fault on the CPU that
-;   will crash the computer.
+;   The second stage of the bootloader, this stage executes after the bootstrap loader is finished preparing the system.
+;   This section will switch the CPU from real mode to protected mode. It defines the GDT to use and enables the A20 line.
 ;
 main:
-    cli             ; clear the interrupts to prevent the CPU from tipple faulting while moving the segments.
-    xor ax, ax      ; Clear the accumulator.
-    mov ds, ax      ; Move the data segment to location 0.
-    mov es, ax      ; Move the extra segment to location 0.
-    mov ax, 0x9000  ; Set the the location to place the stack segment.
-    mov ss, ax      ; Actually move the stack segment.
-    mov sp, 0xFFFF  ; Set the base of the stack at 0xFFFF (grows down to 0x9000).
-    sti             ; Re-enable the interrupts.
-    defstr msg_switch, "Switching the CPU into protected mode..."
-    println msg_switch
-    cli
-    hlt
-    call InstallGDT ; Install the global descriptor table in the GDTR of the CPU.
-    cli             ; Disable the interrupts because they will tipple fault the CPU in protected mode.
-    mov eax, cr0    ; Get the value of the control register and copy it into eax.
-    or eax, 1       ; Alter the protected mode enable bit, set it to 1 so the CPU switches to it.
-    mov cr0, eax    ; Copy the altered value with protected mode enabled back into the control register effectively switching modes.
-    jmp 0x08:proteded_start     ; Jump to label that configures the CPU for 32 bits protected mode.
+    ; Align the segments to the new locations.
+    cli                         ; clear the interrupts to prevent the CPU from tipple faulting while moving the segments.
+    xor ax, ax                  ; Clear the accumulator.
+    mov ds, ax                  ; Move the data segment to location 0.
+    mov es, ax                  ; Move the extra segment to location 0.
+    mov ax, 0x9000              ; Set the the location to place the stack segment.
+    mov ss, ax                  ; Actually move the stack segment.
+    mov sp, 0xFFFF              ; Set the base of the stack at 0xFFFF (grows down to 0x9000).
+    sti                         ; Re-enable the interrupts.
 
-; String constants
+    ; Define GDT
+    call InstallGDT             ; Install the global descriptor table in the GDTR of the CPU.
+    mov si, msg_gdt
+    call put_string_16           ; Print status message to the user using macro defined in x16 stdio.asm
+
+    ; Enable A20
+    call enable_A20             ; Enable the A20 line by flipping the A20 gate.
+    mov si, msg_a20
+    call put_string_16          ; Print status message to the user using macro defined in x16 stdio.asm
+
+;_________________________________________________________________________________________________________________________/ § enter_stage3
+;   This section will switch the CPU into protected mode and jump the the third stage of the bootloader.
+enter_stage3:
+    mov si, msg_switch
+    call put_string_16          ; Print status message to the user using macro defined in x16 stdio.asm
+    cli                         ; Disable the interrupts because they will tipple fault the CPU in protected mode.
+    mov eax, cr0                ; Get the value of the control register and copy it into eax.
+    or eax, 1                   ; Alter the protected mode enable bit, set it to 1 so the CPU switches to it.
+    mov cr0, eax                ; Copy the altered value with protected mode enabled back into the control register effectively switching modes.
+    jmp 0x08:stage3     ; Jump to label that configures the CPU for 32 bits protected mode.
 
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:
@@ -72,7 +85,7 @@ main:
 ;
 bits 32 ; Configure the assembler to assemble into 32 bit machine instructions.
 
-proteded_start:
+stage3:
     mov ax, 0x10    ; Set the starting address of the segments.
     mov ds, ax      ; Move the data segment to the address 0x10.
     mov ss, ax      ; Move the stack segment to the address 0x10.

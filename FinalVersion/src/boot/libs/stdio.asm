@@ -29,59 +29,21 @@
 
 bits 16
 
-;_________________________________________________________________________________________________________________________/ ϝ print
+;_________________________________________________________________________________________________________________________/ ϝ put_string_16
 ;   This function prints a string to the screen.
-%macro print 1
-    pusha       ; Save the CPU register state to the stack.
-    mov si, %1  ; Set the source pointer to the start of the string to print.
+put_string_16:
+	pusha				; save registers
 
-    .print_char:  ; Print a string to the screen function.
-        lodsb           ; Get byte from the segment index register.
-        or al, al       ; logical or on al register, are there we done printing characters?
-        jz .return      ; Then return to the main routine.
-
-        mov ah, 0x0E    ; Otherwise fetch an new character.
-        int 0x10        ; And print the character to the screen with an BIOS interrupt.
-        jmp .print_char ; Go the the next character.
+    .print_char:
+		lodsb           ; load next byte from string from SI to AL
+		or	al, al      ; Does AL=0?
+		jz	.return		; Yep, null terminator found-bail out
+		mov	ah, 0x0E	; Nope-Print the character
+		int	0x10	    ; invoke BIOS
+		jmp	.print_char	    ; Repeat until null terminator found
 
     .return:
-        popa    ; restore the CPU registers from the stack.
-        ret     ; Back to main routine.
-%endmacro
-
-;_________________________________________________________________________________________________________________________/ ϝ println
-;   This function prints a string to the screen and moves the cursor to a new line.
-%macro println 1
-    pusha       ; Save the CPU register state to the stack.
-    mov si, %1  ; Set the source pointer to the start of the string to print.
-
-    .print_char:  ; Print a string to the screen function.
-        lodsb           ; Get byte from the segment index register.
-        or al, al       ; logical or on al register, are there we done printing characters?
-        jz .print_nl    ; Then return to the main routine.
-
-        mov ah, 0x0E    ; Load an shift out character.
-        int 0x10        ; And print the character to the screen with an BIOS interrupt.
-        jmp .print_char ; Go the the next character.
-
-    .print_nl:
-        mov ax, 0x0E0D   ; Set ascii shift out character + Set ascii carriage return character.
-        int 0x10        ; And print the character to the screen with an BIOS interrupt.
-        mov al, 0x0A    ; Set ascii new line feed character.
-        int 0x10        ; And print the character to the screen with an BIOS interrupt.
-        jmp .return     ; Done, so return.
-
-    .return:
-        popa    ; restore the CPU registers from the stack.
-        ret     ; Back to main routine.
-%endmacro
-
-;_________________________________________________________________________________________________________________________/ ϝ defstr
-;   This function creates an new zero terminated string.
-%macro defstr 2
-  jmp %1_after_def    ; jump over the string that we define
-  %1 db %2, 0         ; declare the string
-  %1_after_def:       ; continue on
-%endmacro
+		popa            ; restore registers
+		ret	            ; we are done, so return
 
 %endif
