@@ -25,7 +25,6 @@
 ;   Created: 20-12-2017 07:25                                                                                          ;
 ;                                                                                                                      ;
 bits 16
-
 ;_________________________________________________________________________________________________________________________/ ϝ put_string_16
 ;   This function prints a string to the screen.
 put_string_16:
@@ -42,15 +41,4 @@ put_string_16:
     .return:
 		popa            ; restore registers
 		ret	            ; we are done, so return
-
-println_16:
-    pusha
-    call put_string_16
-    mov ah, 0x0E
-    mov al, 0x0A
-    int 0x10
-    mov ah, 0x0E
-    mov al, 0x0D
-    int 0x10
-    popa
-    ret
+		ret	            ; we are done, so return

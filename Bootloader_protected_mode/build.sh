@@ -138,7 +138,7 @@ print_fancy pagga "Done building!"
     if which ponysay >/dev/null ; then
         ponysay  "Done building, do you want to start Jorix OS? [Y/n]"
     else
-        echo "Done building, do you want to start Jorix OS? [Y/n]"
+            echo "Done building, do you want to start Jorix OS? [Y/n]"
     fi
     # Wait for the user to decide if he want to run the build operation system.
     read  answer

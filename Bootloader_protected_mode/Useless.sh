@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-SomeFonts=("nvscript" "O8" "Banner" "OS2" "reverse" "Rectangles" "s-relief" "speed" "smslant" "Roman" "small" "sub-zero" "swampland" "Slant" "timesofl" "Tombstone" "xtimes" "s-relief" "Nancyj-Underlined" "nancyj-improved" "nancyj-fancy" "Modular" "Mini" "miniwi" "larry3d" "Kban" "jazmine" "Georgi16" "Fuzzy" "fire_font-s" "f15_____" "Elite" "Electronic" "Maxiwi" "eftifont" "doom" "Doh" "digital" "defleppard" "Cosmike" "Cybermedium" "Cyberlarge" "cricket" "Gradient" "Contessa" "colossal" "Computer" "contrast" "Chunky" "charact6" "broadway_kb" "Broadway" "bright" "Bigfig" "Banner3-D" "Alligator" "Bloody" "Alligator2" "Bolger" "3D-ASCII" "3-D" "3d")
+SomeFonts=("nvscript" "O8" "Banner" "OS2" "reverse" "Rectangles" "s-relief" "speed" "smslant" "roman" "small" "sub-zero" "swampland" "Slant" "timesofl" "Tombstone" "xtimes" "s-relief" "Nancyj-Underlined" "nancyj-improved" "nancyj-fancy" "Modular" "mini" "miniwi" "larry3d" "Kban" "jazmine" "Georgi16" "Fuzzy" "fire_font-s" "f15_____" "Elite" "Electronic" "maxiwi" "eftifont" "doom" "Doh" "digital" "defleppard" "Cosmike" "Cybermedium" "Cyberlarge" "cricket" "Gradient" "Contessa" "colossal" "Computer" "contrast" "Chunky" "charact6" "broadway_kb" "Broadway" "bright" "Bigfig" "Banner3-D" "Alligator" "Bloody" "Alligator2" "Bolger" "3D-ASCII" "3-D" "3d")
 
 for font in "${SomeFonts[@]}"
 do
    toilet -t -f ${font} 'Jorix OS' | boxes -d twisted -a hc -p h8 | toilet --gay -f term -t
-   echo 'toilet -t -f '${font}'Jorix OS | boxes -d twisted -a hc -p h8 | toilet --gay -f term -t'
    toilet -t -f ${font} 'Jorix OS' | boxes -d text-box -a hc -p h8 | toilet --gay -f term -t
    toilet -t -f ${font} 'Jorix OS' | boxes -d stark2 -a hc -p h8 | toilet --gay -f term -t
    toilet -t -f ${font} 'Jorix OS' | boxes -d simple -a hc -p h8 | toilet --gay -f term -t
