@@ -2,6 +2,9 @@
 This repository contains the solutions of the Operating system assignments from project
 group INF2B.
 
+### This brance
+This brance of the code contains the early code en tutorials I did for learning about
+OS development. You should not use this it is for backup purposes only.
 
 ### Solutions
  - Solutions made by [Arjan](https://github.com/arjan-kuiper/BootMenu)
