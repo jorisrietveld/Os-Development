@@ -1,37 +1,18 @@
-;                                                                                       ,   ,           ( VERSION 0.0.2
-;                                                                                         $,  $,     ,   `̅̅̅̅̅̅( 0x002
-;                                                                                         "ss.$ss. .s'          `̅̅̅̅̅̅
-;   MMMMMMMM""M MMP"""""YMM MM"""""""`MM M""M M""MMMM""M                          ,     .ss$$$$$$$$$$s,
-;   MMMMMMMM  M M' .mmm. `M MM  mmmm,  M M  M M  `MM'  M                          $. s$$$$$$$$$$$$$$`$$Ss
-;   MMMMMMMM  M M  MMMMM  M M'        .M M  M MM.    .MM    .d8888b. .d8888b.     "$$$$$$$$$$$$$$$$$$o$$$       ,
-;   MMMMMMMM  M M  MMMMM  M MM  MMMb. "M M  M M  .mm.  M    88'  `88 Y8ooooo.    s$$$$$$$$$$$$$$$$$$$$$$$$s,  ,s
-;   M. `MMM' .M M. `MMM' .M MM  MMMMM  M M  M M  MMMM  M    88.  .88       88   s$$$$$$$$$"$$$$$$""""$$$$$$"$$$$$,
-;   MM.     .MM MMb     dMM MM  MMMMM  M M  M M  MMMM  M    `88888P' `88888P'   s$$$$$$$$$$s""$$$$ssssss"$$$$$$$$"
-;   MMMMMMMMMMM MMMMMMMMMMM MMMMMMMMMMMM MMMM MMMMMMMMMM                       s$$$$$$$$$$'         `"""ss"$"$s""
-;                                                                               s$$$$$$$$$$,              `"""""$  .s$$s
-;   ______[  Author ]______    ______[  Contact ]_______                        s$$$$$$$$$$$$s,...               `s$$'  `
-;      Joris Rietveld           jorisrietveld@gmail.com                       sss$$$$$$$$$$$$$$$$$$$$####s.     .$$"$.   , s-
-;                                                                             `""""$$$$$$$$$$$$$$$$$$$$#####$$$$$$"     $.$'
-;   _______________[ Website & Source  ]________________                           "$$$$$$$$$$$$$$$$$$$$$####s""     .$$$|
-;       https://github.com/jorisrietveld/Bootloaders                                 "$$$$$$$$$$$$$$$$$$$$$$$$##s    .$$" $
-;                                                                                     $$""$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"   `
-;   ___________________[ Licence ]______________________                             $$"  "$"$$$$$$$$$$$$$$$$$$$$S""""'
-;             General Public licence version 3                                  ,   ,"     '  $$$$$$$$$$$$$$$$####s
-;   ===============================================================================================================    ;
-;                                                                                           Second Stage Bootloader    ;                                                                                                                     ;
-;   Description:                                                                            ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅    ;
-;   This file contains the second stage of the bootloader. Because of the memory size constrains of only 512 bytes,    ;
-;   we have split the bootloader into two stages. One for setting up the minimal requirements of the system and a      ;
-;   second one that can switch the CPU into protected mode and knows how to locate and start the operating system.     ;
-;   This file contains the second stage that is responsible for loading the kernel. It contains both 16 bit and 32     ;
-;   bit assembler code because it will switch the CPU from 16 bit real mode to 32 bit protected mode.                  ;
-;                                                                                                                      ;
-;   Created: 13-11-2017 21:40                                                                                          ;
-;                                                                                                                      ;
+;_________________________________________________________________________________________________________________________/ Fat12.asm
+;   Author: Joris Rietveld  <jorisrietveld@gmail.com>
+;   Created: 03-01-2018 00:28
+;
+;   Description:
+;   This file contains the second stage of the bootloader. Because of the memory size constrains of only 512 bytes,
+;   we have split the bootloader into two stages. One for setting up the minimal requirements of the system and a
+;   second one that can switch the CPU into protected mode and knows how to locate and start the operating system.
+;   This file contains the second stage that is responsible for loading the kernel. It contains both 16 bit and 32
+;   bit assembler code because it will switch the CPU from 16 bit real mode to 32 bit protected mode.
+;
 
-org 0x500    ; Offset to address 0
-bits 16     ; Assemble to 16 bit instructions (For 16 bit real-mode)
-jmp main    ; Jump to the main label.
+bits 16                 ; Assemble to 16 bit instructions (For 16 bit real-mode)
+org 0x500               ; Offset to address 0x50:0
+jmp main                ; Jump to main.
 
 %include "./libs/stdio.asm"
 %include "./libs/gdt.asm"

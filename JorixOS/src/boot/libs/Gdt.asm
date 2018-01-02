@@ -1,34 +1,17 @@
-;                                                                                       ,   ,           ( VERSION 0.0.2
-;                                                                                         $,  $,     ,   `̅̅̅̅̅̅( 0x002
-;                                                                                         "ss.$ss. .s'          `̅̅̅̅̅̅
-;   MMMMMMMM""M MMP"""""YMM MM"""""""`MM M""M M""MMMM""M                          ,     .ss$$$$$$$$$$s,
-;   MMMMMMMM  M M' .mmm. `M MM  mmmm,  M M  M M  `MM'  M                          $. s$$$$$$$$$$$$$$`$$Ss
-;   MMMMMMMM  M M  MMMMM  M M'        .M M  M MM.    .MM    .d8888b. .d8888b.     "$$$$$$$$$$$$$$$$$$o$$$       ,
-;   MMMMMMMM  M M  MMMMM  M MM  MMMb. "M M  M M  .mm.  M    88'  `88 Y8ooooo.    s$$$$$$$$$$$$$$$$$$$$$$$$s,  ,s
-;   M. `MMM' .M M. `MMM' .M MM  MMMMM  M M  M M  MMMM  M    88.  .88       88   s$$$$$$$$$"$$$$$$""""$$$$$$"$$$$$,
-;   MM.     .MM MMb     dMM MM  MMMMM  M M  M M  MMMM  M    `88888P' `88888P'   s$$$$$$$$$$s""$$$$ssssss"$$$$$$$$"
-;   MMMMMMMMMMM MMMMMMMMMMM MMMMMMMMMMMM MMMM MMMMMMMMMM                       s$$$$$$$$$$'         `"""ss"$"$s""
-;                                                                               s$$$$$$$$$$,              `"""""$  .s$$s
-;   ______[  Author ]______    ______[  Contact ]_______                        s$$$$$$$$$$$$s,...               `s$$'  `
-;      Joris Rietveld           jorisrietveld@gmail.com                       sss$$$$$$$$$$$$$$$$$$$$####s.     .$$"$.   , s-
-;                                                                             `""""$$$$$$$$$$$$$$$$$$$$#####$$$$$$"     $.$'
-;   _______________[ Website & Source  ]________________                           "$$$$$$$$$$$$$$$$$$$$$####s""     .$$$|
-;       https://github.com/jorisrietveld/Bootloaders                                 "$$$$$$$$$$$$$$$$$$$$$$$$##s    .$$" $
-;                                                                                     $$""$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"   `
-;   ___________________[ Licence ]______________________                             $$"  "$"$$$$$$$$$$$$$$$$$$$$S""""'
-;             General Public licence version 3                                  ,   ,"     '  $$$$$$$$$$$$$$$$####s
-;   ===============================================================================================================    ;
-;                                                                                          General Descriptor Table    ;                                                                                                                     ;
-;   Description:                                                                           ̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅    ;
-;   This file defines the GDT (General Descriptor Table). The general descriptor table defines an common structure     ;
-;   for each programs memory. this is needed to separate different types of data while using the CPU in protected      ;
-;   mode. The table defines segments that are only allowed to contain data (variables) this section is called the      ;
-;   data section, an segment for storing executable code: text segment and later maybe an rodata (read only data),     ;
-;   init (runtime initialization), fini (runtime finalization), debug (used to leak sensitive data) and a comment      ;
-;   section (For version control).                                                                                     ;
-;                                                                                                                      ;
-;   Created: 20-12-2017 07:25                                                                                          ;
-;                                                                                                                      ;
+;_________________________________________________________________________________________________________________________/ Gdt.asm
+;   Author: Joris Rietveld  <jorisrietveld@gmail.com>
+;   Created: 03-01-2018 00:50
+;
+;   Description:
+;   This file defines the GDT (General Descriptor Table). The general descriptor table defines an common structure
+;   for each programs memory. this is needed to separate different types of data while using the CPU in protected
+;   mode. The table defines segments that are only allowed to contain data (variables) this section is called the
+;   data section, an segment for storing executable code: text segment and later maybe an rodata (read only data),
+;   init (runtime initialization), fini (runtime finalization), debug (used to leak sensitive data) and a comment
+;   section (For version control).
+;
+;   Created: 20-12-2017 07:25
+;
 
 %ifndef __GDT_INC_INCLUDED__
 %define __GDT_INC_INCLUDED__
