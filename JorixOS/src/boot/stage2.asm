@@ -18,13 +18,13 @@ jmp main                ; Jump to main.
 %include "./libs/Gdt.asm"       ; This file contains the General Descriptor Table.
 %include "./libs/A20.asm"       ; This file contains functions for changing the A20 gate.
 %include "./libs/Fat12.asm"     ; This file contains an FAT12 driver.
-%include "./libs/common.asm"    ; This file contains global data like variables, macros and constants.
+%include "./libs/Common.asm"    ; This file contains global data like variables, macros and constants.
 
 ;________________________________________________________________________________________________________________________/ § data section
 msg_gdt     db "Installed GDT...", 0x0D, 0x0A, 0   ; Create an message.
 msg_a20     db "Enabled the A20 line...", 0x0D, 0x0A, 0   ; Create an message.
 msg_switch  db "Switching the CPU into protected mode...", 0x0D, 0x0A, 0   ; Create an message.
-
+msg_fail    db "Error loading the kernel", 0x0D, 0x0A, 0
 ;________________________________________________________________________________________________________________________/ § text section
 ;   Description:
 ;   The second stage of the bootloader, this stage executes after the bootstrap loader is finished preparing the system.
@@ -56,12 +56,12 @@ main:
     mov	ebx, 0                  ; BX:BP points to buffer to load to
     mov	bp, IMAGE_REAL_MODE_BASE
     mov	si, ImageName           ; our file to load
-    call LoadFile               ; load our file
+    call loadFile               ; load our file
     mov	dword [ImageSize], ecx  ; save size of kernel
     cmp	ax, 0                   ; Test for success
     je	enterStage3             ; yep--onto Stage 3!
-    mov	si, msgFailure          ; Nope--print error
-    call Puts16
+    mov	si, msg_fail          ; Nope--print error
+    call printString16
     mov	ah, 0
     int 0x16                    ; await keypress
     int 0x19                    ; warm boot computer
@@ -74,7 +74,7 @@ enterStage3:
     mov eax, cr0                ; Get the value of the control register and copy it into eax.
     or eax, 1                   ; Alter the protected mode enable bit, set it to 1 so the CPU switches to it.
     mov cr0, eax                ; Copy the altered value with protected mode enabled back into the control register effectively switching modes.
-    jmp CODE_DESC0x08:stage3     ; Jump to label that configures the CPU for 32 bits protected mode.
+    jmp CODE_DESC:stage3        ; Jump to label that configures the CPU for 32 bits protected mode.
 
 ;________________________________________________________________________________________________________________________/ § Stage 3
 ;   Description:
@@ -85,11 +85,28 @@ enterStage3:
 bits 32 ; Configure the assembler to assemble into 32 bit machine instructions.
 
 stage3:
-    mov ax, 0x10    ; Set the starting address of the segments.
-    mov ds, ax      ; Move the data segment to the address 0x10.
-    mov ss, ax      ; Move the stack segment to the address 0x10.
-    mov es, ax      ; Move the extra segment to the address 0x10.
-    mov esp, 0x9000 ; Move the top of the stack to location 0x9000.
+    mov ax, DATA_DESC       ; Set the starting address of the segments.
+    mov ds, ax              ; Move the data segment to the address 0x10.
+    mov ss, ax              ; Move the stack segment to the address 0x10.
+    mov es, ax              ; Move the extra segment to the address 0x10.
+    mov esp, 0x9000         ; Move the top of the stack to location 0x9000.
+
+copyImage:
+    mov eax, dword[ImageSize]
+    movzx ebx, word[sectorSize]
+    mul ebx
+    mov ebx, 0x4
+    div ebx
+    cld
+    mov esi, IMAGE_REAL_MODE_BASE
+    mov edi, IMAGE_PROTECTED_MODE_BASE
+    mov ecx, eax
+    rep movsd
+
+    jmp CODE_DESC:IMAGE_PROTECTED_MODE_BASE ; Jump to the kernel.
+
+    cli                     ; Clear all interrupts.
+    hlt                     ; And halt the system.
 
     call clearDisplay32
 printBootMenu:

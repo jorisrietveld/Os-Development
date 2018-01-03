@@ -10,11 +10,14 @@
 %define __FAT12_ASM_INCLUDED__
 bits 16
 
-%include "Floppy16.asm"
+%include "./libs/stdio.asm"
+%include "./libs/Floppy16.asm"
 
 %define     ROOT_OFFSET     0x02E00 ; The location to load the root directory table and FAT.
 %define     FAT_SEGMENT     0x2C0   ; The location to load the fat in the segment registers.
 %define     ROOT_SEGMENT    0x2C0   ; The location to load the root directory in the segment registers.
+
+
 
 ;________________________________________________________________________________________________________________________/ ϝ loadRootDirectory
 ;   Description:
@@ -71,7 +74,7 @@ loadFAT:
     push word FAT_SEGMENT           ; Store the segment location on to the stack.
     pop es                          ; And set it to the extra segment.
     xor bx, bx                      ; Clear the base register.
-    call ReadSectors                ; Read the sectors from disk
+    call readSectors                ; Read the sectors from disk
     pop es                          ; And restore the extra segment to its previous state.
     popa                            ; Also restore all the other CPU registers.
     ret                             ; The FAT is loaded
@@ -99,7 +102,7 @@ findFile:
 
     ;_______________________ Root Directory Entry iteration ______________________
     ; Check if there is an entry in the root directory that matches the file name.
-    .checkEntry
+    .checkEntry:
         push cx                     ; Save root directory counter so we can use the counter register for iterating over
         mov cx, 0x000B              ; the file names in the root directory. Each file name is 11 characters long.
         mov si, bx                  ; Set the file name to the si that will be used for string comparing.
@@ -116,6 +119,8 @@ findFile:
     ;_______________________ Return Error ________________________
     ; No entry found that matches the file name, return status -1.
     .notFound:
+        mov si, debugMessage
+        call printString16
         pop bx                      ; Restore the base,
         pop dx                      ; data and
         pop cx                      ; counter registers from stack.
@@ -154,7 +159,7 @@ loadFile:
         push bp                     ; Store the storage buffer pointer.
         call findFile               ; Locate index of the file on disk, store result in ax.
         cmp ax, -1                  ; Check for error.
-        jne .loadImagePreparation   ; No errors found jump over error handling.
+        jne .loadFilePreparation   ; No errors found jump over error handling.
 
         ; Error handling.
         pop bp                      ; Restore the base pointer,
@@ -227,14 +232,16 @@ loadFile:
         .finishedCluster:
             mov word[cluster], dx   ;
             cmp dx, 0x0ff0          ; Compare the data register to 4080 (Constant for end of file marker)
-            jb loadImage            ; Move to the next
+            jb loadFile             ; Move to the next
 
-        .success
+        .success:
             pop es                  ; Restore the extra segment.
             pop bx                  ; And restore the base and
             pop ecx                 ; extended counter registers.
             xor ax, ax              ; Set the status code to 0 meaning success.
             ret
+
+debugMessage db "Error is here.", 0
 
 %endif ; __FAT12_ASM_INCLUDED__
 

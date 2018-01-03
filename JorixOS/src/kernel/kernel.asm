@@ -22,7 +22,7 @@ stage3:
     mov esp, 0x90000    ; The stack will start from address 0x900000 (Growing downwards)
 
     ; Print welcome message from 32 bit kernel.
-    call clearScreen32  ; Clean up the screen.
+    call clearDisplay32  ; Clean up the screen.
     mov ebx, msg        ; Get the pointer to the string as argument for the printString32 call.
     call printString32  ; Print the sting to the screen.
 
