@@ -176,10 +176,12 @@ notify_success "Finished creating the floppy image.\n"
 notify "Creating CD ISO image..."
 
 _safe_rm "${CD_OUT}" 0      # Remove the old iso.
-FLOPPY_RELATIVE_PATH="$(realpath --relative-to=$(pwd)/disk_images ${FLOPPY_OUT} )"
-ISO_RELATIVE_PATH="$(realpath --relative-to=$(pwd)/disk_images ${DISK_IMG_DIR} )"
-echo "${CD_OUT}\n${FLOPPY_RELATIVE_PATH}\n${DISK_IMG_DIR}\n"
-genisoimage -quiet -V 'JORIXOS' -input-charset iso8859-1 -o "${CD_OUT}" -b ${FLOPPY_RELATIVE_PATH} ${DISK_IMG_DIR} || exit
+
+genisoimage -quiet -V 'JORIXOS' -input-charset iso8859-1 \
+            -o "${CD_OUT}" \
+            -b "$(realpath --relative-to="${DISK_IMG_DIR}" "${FLOPPY_OUT}")" \
+            ${DISK_IMG_DIR} || exit
+
 fix_file_permissions "${CD_OUT}"
 notify_success "Successfully created an CD-ROM image: ${CD_OUT}"
 
