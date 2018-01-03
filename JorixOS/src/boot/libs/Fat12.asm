@@ -6,8 +6,8 @@
 ;   This file contains code for using the File Allocation Table 12 (FAT12) file system that is used on 3.5 floppies.
 ;
 
-%ifndef __FAT12_ASM_INCLUDED
-%define __FAT12_ASM_INCLUDED
+%ifndef __FAT12_ASM_INCLUDED__
+%define __FAT12_ASM_INCLUDED__
 bits 16
 
 %include "Floppy16.asm"
@@ -236,7 +236,7 @@ loadFile:
             xor ax, ax              ; Set the status code to 0 meaning success.
             ret
 
-%endif
+%endif ; __FAT12_ASM_INCLUDED__
 
 ;
 ;                               + ADDITIONAL INFORMATION REFERENCED IN THE CODE ABOVE.

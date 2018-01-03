@@ -19,6 +19,7 @@ CLEAN_AFTER_BUILD=0
 # You probably don't want to chance this.
 BOOTSTRAP_NAME=bootstrap    # The 512 byte bootstrap loader.
 STAGE2_NAME=stage2          # The kernel loader.
+KERNEL_NAME=kernel          # The Kernel name
 OUTPUT_PRIVILEGE_LEVEL=777  # File privileges on compiled binaries.
 OUTPUT_DIRECTORY="out/"     # Directory for the compiled binaries. Ignored when either CLEAN_AFTER_BUILD or OUTPUT_IN_SOURCE_DIR is set to 1.
 OUTPUT_IN_SOURCE_DIR=1      # Place the compiled binaries in the same directory as the source 1, use OUTPUT_DIR = 0
@@ -80,16 +81,25 @@ cd ./src/boot/ || exit
 
 BOOT_OUT="${BOOTSTRAP_NAME}.bin"
 STG2_OUT="${STAGE2_NAME}.bin"
+KERNEL_OUT="${KERNEL_NAME}.bin"
 
 sudo -u "${USER}" rm -rf ${BOOT_OUT} ${STG2_OUT} # First clean old binaries.
 
 sudo -u "${USER}" nasm -O0 -w+orphan-labels -f bin -o ${BOOT_OUT} ${BOOTSTRAP_NAME}.asm && chmod 777 ${BOOT_OUT} || exit
-notify_success "successfully assembled the first stage of the bootloader to an binary: ${BIN_OUT}.bin" && notify "Assembling the second stage of the bootloader..."
+notify_success "successfully assembled the first stage of the bootloader to an binary: ${BOOT_OUT}" && notify "Assembling the second stage of the bootloader..."
 sudo -u "${USER}" nasm -O0 -w+orphan-labels -f bin -o ${STG2_OUT} ${STAGE2_NAME}.asm && chmod 777 ${STG2_OUT} || exit
+notify_success "successfully assembled the second stage of the bootloader to an binary: ${STG2_OUT}"
 
-notify_success "successfully assembled the second stage of the bootloader to an binary: ${BIN_OUT}.bin"
+cd ../../kernel/ || exit # go to the kernel directory.
+
+sudo -u "${USER}" rm -rf ${KERNEL_OUT} # clean old binary.
+
+sudo -u "${USER}" nasm -O0 -w+orphan-labels -f bin -o ${KERNEL_OUT} ${KERNEL_NAME}.asm && chmod 777 ${KERNEL_OUT} || exit
+notify_success "successfully assembled the kernel to an binary: ${KERNEL_OUT}"
+
 notify_success "Done assembling files.\n"
-cd ../../
+
+cd ../ || exit
 
 #________________________________________________________________________________________________________________________/ Install bootloader
 #   Copy the first stage of the bootloader to the floppy image.
@@ -108,10 +118,12 @@ mkdir /tmp/tmp-floppy-loop && mount -o loop -t vfat ${DISK_IMG_DIR}${IMAGE_NAME}
 notify_success "Successfully mounted the floppy to /tmp/tmp-floppy-loop"
 
 notify "Coping the second stage loader, kernel and programs on to the virtual floppy..."
-cp "src/boot/${STAGE2_NAME}.bin" /tmp/tmp-floppy-loop || exit
+
+cp "src/boot/${STG2_OUT}" /tmp/tmp-floppy-loop || exit
+cp "src/kernel/${KERNEL_OUT}" /tmp/tmp-floppy-loop || exit
+
 notify_success "Successfully copied the second stage loader /tmp/tmp-floppy-loop"
 sleep 0.2
-
 notify "All files are copied, unmounting /tmp/tmp-floppy-loop..."
 umount /tmp/tmp-floppy-loop || exit
 

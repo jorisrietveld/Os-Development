@@ -1,6 +1,6 @@
 ;_________________________________________________________________________________________________________________________/ Gdt.asm
 ;   Author: Joris Rietveld  <jorisrietveld@gmail.com>
-;   Created: 03-01-2018 00:50
+;   Created: 20-12-2017 07:25
 ;
 ;   Description:
 ;   This file defines the GDT (General Descriptor Table). The general descriptor table defines an common structure
@@ -10,11 +10,8 @@
 ;   init (runtime initialization), fini (runtime finalization), debug (used to leak sensitive data) and a comment
 ;   section (For version control).
 ;
-;   Created: 20-12-2017 07:25
-;
-
-%ifndef __GDT_INC_INCLUDED__
-%define __GDT_INC_INCLUDED__
+%ifndef __GDT_ASM_INCLUDED__
+%define __GDT_ASM_INCLUDED__
 
 bits	16
 
@@ -92,4 +89,4 @@ toc:    ;
 	dd gdt_data                     ; base of GDT, just the starting address.
 
 
-%endif ;__GDT_INC_INCLUDED__
+%endif ;__GDT_ASM_INCLUDED__
