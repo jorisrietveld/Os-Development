@@ -41,7 +41,18 @@ while getopts ":n:t:" options; do                # Our getopts while loop
       ;;
   esac
 done
-#________________________________________________________________________________________________________________________/ Main
+#____________
+
+
+
+
+
+
+
+
+
+
+____________________________________________________________________________________________________________/ Main
 # Functions used in this script.
 if [ "$NAME" = "" ]; then                        # If $NAME is an empty string,
   STRING="Hi!"                                   # our greeting is just "Hi!"
