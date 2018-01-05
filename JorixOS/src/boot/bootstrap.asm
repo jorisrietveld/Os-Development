@@ -62,7 +62,7 @@ bpbHiddenSectors  	    dd 0            ; The amount of sectors between the physi
 bpbTotalSectorsBig      dd 0            ; The total amount of lage sectors.
 bsDriveNumber  	        db 0            ; 0 because this is the standard for floppy disks.
 bsExtBootSignature  	db 41           ; The boot signature of: MS/PC-DOS Version 4.0
-bsSerialNumber 	        dd 00000000h    ; This gets overwritten every time the image get written.
+bsSerialNumber 	        dd 0x00000000   ; This gets overwritten every time the image get written.
 bsVolumeLabel  	        db "JORIX OS   "; The label of the volume.
 bsFileSystem  	        db "FAT12   "   ; The type of file system.
 
@@ -333,7 +333,12 @@ convertChsToLba:
     ret                                 ; return to the caller.
 ;________________________________________________________________________________________________________________________/ ϝ convertLbaToChs
 ;   Description:
-;
+;   This function is responsible for converting LBA(Logical Block Addressing) to CHS(Cylinder/Head/Sector) using the
+;   formulas:
+;       Absolute sector     = (LBA % sectorPerTrack)+1
+;       Absolute head       = (LBA / sectorPerTrack) % numberOfHeads
+;       Absolute track      = LBA / ( sectorPerTrack * numberOfHeads)
+;                                                                                                           Input:  ax
 convertLbaToChs:
     xor dx, dx
     div word[bpbSectorsPerTrack]
