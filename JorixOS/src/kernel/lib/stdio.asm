@@ -6,9 +6,15 @@
 ;   This file includes several assembler macros for standard input and output operations in 16 bits mode. Like
 ;   string printing operations keyboard input etc.
 ;
-bits 16
 %ifndef __STDIO_ASM_INCLUDED__
 %define __STDIO_ASM_INCLUDED__
+bits 16
+
+%define DISPLAY_BIOS_INT    0x10    ; Bios interrupt for low level display services.
+
+%define ASCII_SO_CHAR       0x0E    ; Ascii new line feed character.
+%define ASCII_LF_CHAR       0x0A    ; Ascii new line feed character.
+
 ;_________________________________________________________________________________________________________________________/ ϝ put_string_16
 ;   Description:
 ;   This function prints a string to the screen using BIOS interrupts.
@@ -16,12 +22,12 @@ printString16:
 	pusha				; save registers
 
     .print_char:
-		lodsb           ; load next byte from string from SI to AL
-		or	al, al      ; Does AL=0?
-		jz	.return		; Yep, null terminator found-bail out
-		mov	ah, 0x0E	; Nope-Print the character
-		int	0x10	    ; invoke BIOS
-		jmp	.print_char	    ; Repeat until null terminator found
+		lodsb                   ; load next byte from string from SI to AL
+		or	al, al              ; Does AL=0?
+		jz	.return		        ; Yep, null terminator found-bail out
+		mov	ah, ASCII_SO_CHAR   ; Nope-Print the character
+		int	DISPLAY_BIOS_INT    ; invoke BIOS
+		jmp	.print_char	        ; Repeat until null terminator found
 
     .return:
 		popa            ; restore registers
@@ -64,7 +70,7 @@ printCharacter32:
     add edi, eax                    ; Add the offset to the base.
 
     ; Check for new line cha_cursorPositionY characters.
-    cmp bl, 0x0A                    ; Do we need to print an newline character?
+    cmp bl, ASCII_LF_CHAR           ; Do we need to print an newline character?
     je .row                         ; Yes, then jump to the newline routine.
 
     ; Print the character
@@ -133,6 +139,10 @@ printString32:
 ;   bl      For setting the X position.
 ;   bh      For setting the y position.
 bits 32
+
+%define VGA_CRT_INDEX_REG   0x03D4
+%define VGA_CRT_DATA_REG    0x03D5
+
 moveCursor32:
     pusha                           ; Save the current register states.
 
@@ -146,18 +156,18 @@ moveCursor32:
 
     ; Set the cursor low to the VGA CRT register (see CRT table above)
     mov al, 0x0F                    ; Get the CRT cursor location low address.
-    mov dx, 0x03D4                  ; Get the VGA CRT index register address.
+    mov dx, VGA_CRT_INDEX_REG       ; Get the VGA CRT index register address.
     out dx, al                      ; Write the cursor location low to the CRT index register.
     mov al, bl                      ; Get the X position that was passed as an argument.
-    mov dx, 0x03D5                  ; Get the VGA CRT data register address.
+    mov dx, VGA_CRT_DATA_REG        ; Get the VGA CRT data register address.
     out dx, al                      ; Write the X position to the to the VGA CRT data register.
 
     ; Set the cursor high to the VGA CRT register (see CRT table at the bottom of this file.)
      mov al, 0x0E                    ; Get the CRT cursor location high address.
-     mov dx, 0x03D4                  ; Get the VGA CRT index register address.
+     mov dx, VGA_CRT_INDEX_REG       ; Get the VGA CRT index register address.
      out dx, al                      ; Write the cursor location low to the CRT index register.
      mov al, bh                      ; Get the Y position that was passed as an argument.
-     mov dx, 0x03D5                  ; Get the VGA CRT data register address.
+     mov dx, VGA_CRT_DATA_REG        ; Get the VGA CRT data register address.
      out dx, al                      ; Write the Y position to the to the VGA CRT data register.
 
      ; Return
@@ -179,8 +189,8 @@ clearDisplay32:
     mov al, ' '                     ; Set the character to print to an space character to overwrite everything with.
     rep stosw                       ; Print 2000 space characters to the screen, effectively clearing it.
 
-    mov byte[_cursorPositionX], 0x00; Set the X position of the cursor to 0, to start at the first column.
-    mov byte[_cursorPositionY], 0x00; Set the Y position of the cursor to 0, to start at the first line.
+    mov byte[_cursorPositionX], 0   ; Set the X position of the cursor to 0, to start at the first column.
+    mov byte[_cursorPositionY], 0   ; Set the Y position of the cursor to 0, to start at the first line.
     popa                            ; Restore the CPU state.
     ret                             ; Return to the caller of the function.
 

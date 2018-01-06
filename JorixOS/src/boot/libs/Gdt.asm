@@ -34,6 +34,7 @@ InstallGDT:
 gdt_data:
 	dd 0            ; null descriptor (Double word, 4 byte)
 	dd 0            ; null descriptor (Double word, 4 byte)
+
     ;_______________________ GDT code descriptor ___________________________
     ; Describes an segment that can be used for executable instructions.
     ;11111111 11111111 00000000 00000000 00000000 10011010 11001111 00000000
@@ -57,8 +58,8 @@ gdt_data:
         ; 6     54     Segmentation type (16/32), Set to 1 for an 32 bits system.
         ; 7     55     Granularity, set it to 1 to make every segment bound to 4 KB
 	db 0            ; base high (starting address), set to 0 because programmers count from zero (⌐■_■).
-	;
-    ;___________________________ GDT code descriptor __________________________
+
+    ;___________________________ GDT data descriptor __________________________
     ; Describes an segment that can be used for storing variables and constants
     ; 11111111 11111111 00000000 00000000 00000000 10010010 11001111 00000000
 	dw 0xFFFF       ; Segmentation limit low bits 0-15

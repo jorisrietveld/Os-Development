@@ -46,7 +46,7 @@ loadRootDirectory:
     ; Read the root directory into 0x7c00
     push word ROOT_SEGMENT          ; Push the root segment addess on to the stack.
     pop es                          ; Pop the extra segment from the stack.
-    mov bx, 0;todo                      ; Set the address to 0
+    xor bx, bx                      ; Set the address to 0
     call readSectors                ; Call the function that copies all sectors from the disk to ram.
     pop es                          ; Remove extra segment from stack.
     popa                            ; Restore all registers.
@@ -104,7 +104,7 @@ findFile:
     ; Check if there is an entry in the root directory that matches the file name.
     .checkEntry:
         push cx                     ; Save root directory counter so we can use the counter register for iterating over
-        mov cx, 11 ;todo                 ; the file names in the root directory. Each file name is 11 characters long.
+        mov cx, 0x000B              ; the file names in the root directory. Each file name is 11 characters long.
         mov si, bx                  ; Set the file name to the si that will be used for string comparing.
         push di                     ; Store the starting index of the file name entry.
         rep cmpsb                   ; Iterate over stored entry and compare it with the file name. Remember cmpsb will
