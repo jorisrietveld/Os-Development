@@ -1,4 +1,4 @@
-;_________________________________________________________________________________________________________________________/ Stage2.asm
+;________________branch_____further________________________________________________________________________________________/ Stage2.asm
 ;   Author: Joris Rietveld  <jorisrietveld@gmail.com>
 ;   Created: 03-01-2018 00:28
 ;
@@ -100,57 +100,3 @@ copyImage:
 
     cli                     ; Clear all interrupts.
     hlt                     ; And halt the system.
-
-;    call clearDisplay32
-;printBootMenu:
-;    ; Print the title of the menu page.
-;    mov ebx, TITLE
-;    call printString32
-;
-;    .printBootOptions:
-;        ; Print the menu and its options.
-;        mov ebx, MENU_HR
-;        call printString32
-;
-;        mov ebx, MENU_OPT_1
-;        call printString32
-;
-;        mov ebx, MENU_OPT_2
-;        call printString32
-;
-;        mov ebx, MENU_OPT_3
-;        call printString32
-;
-;        mov ebx, MENU_OPT_4
-;        call printString32
-;
-;        mov ebx, MENU_FOOTER
-;        call printString32
-;
-;        mov ebx, MENU_SELECT_0
-;        call printString32
-;
-;stop: ; Halt and catch fire...
-;    cli
-;    hlt
-;
-;TITLE           times 2 db  0x0A
-;                db "________________________________[ Jorix OS ]____________________________________",0x0A
-;                times 80 db "="
-;                db          0x0A, 0
-;MENU_HR         db "                NUM    OPTIONS", 0x0A, 0
-;MENU_OPT_1      db "                [1]    Start JoriX OS in normal mode.", 0x0A, 0
-;MENU_OPT_2      db "                (2)    Start JoriX OS in recovery mode.", 0x0A, 0
-;MENU_OPT_3      db "                (3)    Start JoriX OS in debuggin mode.", 0x0A, 0
-;MENU_OPT_4      db "                (4)    Start Teteris.", 0x0A, 0
-;MENU_OPT_5      db "                (5)    Shutdown the pc.", 0x0A, 0
-;MENU_FOOTER     times 80 db "="
-;                db 0x0A, 0
-;MENU_SELECT_0   db "               Please use your arrow keys to select an option.   ", 0x0A, 0
-;MENU_SELECT_1   db "               Press enter to start Jorix OS in normal mode   ", 0x0A, 0
-;MENU_SELECT_2   db "               Press enter to start Jorix OS in recovery modes.", 0x0A, 0
-;MENU_SELECT_3   db "               Press enter to start Jorix OS with debugging tools.", 0x0A, 0
-;MENU_SELECT_4   db "               Press enter to play teteris.", 0x0A, 0
-;MENU_SELECT_5   db "               Press enter to shutdown your pc.", 0x0A, 0
-
-
