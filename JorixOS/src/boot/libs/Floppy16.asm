@@ -27,8 +27,9 @@ sides  	            dw 2            ; The amount of reading heads above each oth
 hiddenSectors  	    dd 0            ; The amount of sectors between the physical start of the disk and filesystem.
 largeSectors        dd 0            ; The total amount of lage sectors.
 driveNumber  	    db 0            ; 0 because this is the standard for floppy disks.
+unused              db 9
 bootSig  	        db 0x29         ; The boot signature of: MS/PC-DOS Version 4.0
-serial 	            dd 0x00000000   ; This gets overwritten every time the image get written.
+serial 	            dd 0xa0a1a2a3   ; This gets overwritten every time the image get written.
 volumeLabel  	    db "MOS FLOPPY "; The label of the volume.
 filesystem  	    db "FAT12   "   ; The type of file system.
 
@@ -41,8 +42,6 @@ cluster     dw 0x0000   ; cluster.
 absoluteSector db 0x00  ; Data sector in CHS (Cylinder Head Sector) addressing.
 absoluteHead   db 0x00  ; Head in CHS (Cylinder Head Sector) addressing.
 absoluteTrack  db 0x00  ; Track in CHS (Cylinder Head Sector) addressing.
-
-%define     MAX_DISK_ERROR_RETRIES 0x0005
 
 ;________________________________________________________________________________________________________________________/ ϝ convertCHStoLBA
 ;   Description:
@@ -93,7 +92,7 @@ convertLBAtoCHS:
 ;
 readSectors:
     .start:
-        mov di, MAX_DISK_ERROR_RETRIES  ; Set an limited amount of retries.
+        mov di, 0x0005  ; Set an limited amount of retries.
 
     ;______________________________________ Sector Read Iteration_________________________________________
     ; Convert the address to chs and execute interrupt 0x13 to load n(cx) amount of sectors from the disk.

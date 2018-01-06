@@ -13,9 +13,9 @@ bits 16
 %include "./libs/stdio.asm"
 %include "./libs/Floppy16.asm"
 
-%define     ROOT_OFFSET     0x02E00 ; The location to load the root directory table and FAT.
+%define     ROOT_OFFSET     0x2E00 ; The location to load the root directory table and FAT.
 %define     FAT_SEGMENT     0x2C0   ; The location to load the fat in the segment registers.
-%define     ROOT_SEGMENT    0x2C0   ; The location to load the root directory in the segment registers.
+%define     ROOT_SEGMENT    0x2E0   ; The location to load the root directory in the segment registers.
 
 
 
@@ -46,7 +46,7 @@ loadRootDirectory:
     ; Read the root directory into 0x7c00
     push word ROOT_SEGMENT          ; Push the root segment addess on to the stack.
     pop es                          ; Pop the extra segment from the stack.
-    xor bx, bx                      ; Set the address to 0
+    mov bx, 0;todo                      ; Set the address to 0
     call readSectors                ; Call the function that copies all sectors from the disk to ram.
     pop es                          ; Remove extra segment from stack.
     popa                            ; Restore all registers.
@@ -104,7 +104,7 @@ findFile:
     ; Check if there is an entry in the root directory that matches the file name.
     .checkEntry:
         push cx                     ; Save root directory counter so we can use the counter register for iterating over
-        mov cx, 11                  ; the file names in the root directory. Each file name is 11 characters long.
+        mov cx, 11 ;todo                 ; the file names in the root directory. Each file name is 11 characters long.
         mov si, bx                  ; Set the file name to the si that will be used for string comparing.
         push di                     ; Store the starting index of the file name entry.
         rep cmpsb                   ; Iterate over stored entry and compare it with the file name. Remember cmpsb will
@@ -119,8 +119,6 @@ findFile:
     ;_______________________ Return Error ________________________
     ; No entry found that matches the file name, return status -1.
     .notFound:
-        mov si, debugMessage
-        call printString16
         pop bx                      ; Restore the base,
         pop dx                      ; data and
         pop cx                      ; counter registers from stack.
@@ -240,9 +238,6 @@ loadFile:
             pop ecx                 ; extended counter registers.
             xor ax, ax              ; Set the status code to 0 meaning success.
             ret
-
-debugMessage db "Error is here.", 0x0A, 0x0D, 0
-
 %endif ; __FAT12_ASM_INCLUDED__
 
 ;
