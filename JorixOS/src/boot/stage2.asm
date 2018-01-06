@@ -19,12 +19,13 @@ jmp main                ; Jump to main.
 %include "libs/A20.asm"       ; This file contains functions for changing the A20 gate.
 %include "libs/Fat12.asm"     ; This file contains an FAT12 driver.
 %include "libs/Common.asm"    ; This file contains global data like variables, macros and constants.
+%include "libs/Ascii.asm"     ;
 
 ;________________________________________________________________________________________________________________________/ § data section
-msg_gdt     db "Installed GDT...", 0x0D, 0x0A, 0   ; Create an message.
-msg_a20     db "Enabled the A20 line...", 0x0D, 0x0A, 0   ; Create an message.
-msg_switch  db "Switching the CPU into protected mode...", 0x0D, 0x0A, 0   ; Create an message.
-msg_fail    db "Error loading the kernel", 0x0D, 0x0A, 0
+msg_gdt     db "Installed GDT...", NEWLN  ; Create an message.
+msg_a20     db "Enabled the A20 line...", NEWLN   ; Create an message.
+msg_switch  db "Switching the CPU into protected mode...", NEWLN   ; Create an message.
+msg_fail    db "Error loading the kernel", NEWLN
 ;________________________________________________________________________________________________________________________/ § text section
 ;   Description:
 ;   The second stage of the bootloader, this stage executes after the bootstrap loader is finished preparing the system.

@@ -66,6 +66,11 @@ bsSerialNumber 	        dd 0x00000000   ; This gets overwritten every time the i
 bsVolumeLabel  	        db "JORIX OS   "; The label of the volume.
 bsFileSystem  	        db "FAT12   "   ; The type of file system.
 
+%include "libs/Ascii.asm"
+%include "libs/Bios.asm"
+
+%define SEGMENT_OFFSET  0x7c0           ; Offset from where all code should start.
+%define FAT_OFFSET      0x0200          ; Offset to load FAT to.
 
 ;________________________________________________________________________________________________________________________/ § main
 ;   Description:
@@ -74,18 +79,18 @@ bsFileSystem  	        db "FAT12   "   ; The type of file system.
 ;
 startFirstStage:
     ; Set the starting point of the code
-    cli             ; Disable all hardware interrupts.
-    mov ax, 0x7c0   ; Define the address of where the code should start.
-    mov ds, ax      ; Adjust the data segment to the new location.
-    mov es, ax      ; Adjust the extra segment to the new location.
-    mov fs, ax      ; Adjust the  segment to the new location.
-    mov gs, ax      ; Adjust the  segment to the new location.
+    cli                                 ; Disable all hardware interrupts.
+    mov ax, SEGMENT_OFFSET              ; Define the address of where the code should start.
+    mov ds, ax                          ; Adjust the data segment to the new location.
+    mov es, ax                          ; Adjust the extra segment to the new location.
+    mov fs, ax                          ; Adjust the  segment to the new location.
+    mov gs, ax                          ; Adjust the  segment to the new location.
 
     ;Create the stack
-    mov ax, 0x0000  ; Set the location where the stack should be located.
-    mov ss, ax      ; Adjust the stack segment to the new location.
-    mov sp, 0xffff  ; Set the stack pointer to start at 0xffff (grows downwards)
-    sti             ; Re-enable the interrupts.
+    mov ax, 0x0000                      ; Set the location where the stack should be located.
+    mov ss, ax                          ; Adjust the stack segment to the new location.
+    mov sp, 0xffff                      ; Set the stack pointer to start at 0xffff (grows downwards)
+    sti                                 ; Re-enable the interrupts.
 
     ; Greet the user
     mov si, msgLoading
@@ -117,7 +122,7 @@ loadRootDirectory:
                                         ; segments to read.
 
     ; Read the root directory into memory at 7c00:0200 using AX (starting point) and CX (Amount of sectors to read).
-    mov bx, 0x0200                      ; Define the location where the root directory should be loaded to, This is
+    mov bx, FAT_OFFSET                  ; Define the location where the root directory should be loaded to, This is
                                         ; after the boot code (320 bytes)
     call readSectors                    ; Call the function that actually reads sectors into memory.
 
@@ -125,7 +130,7 @@ loadRootDirectory:
     mov cx, word[bpbRootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root
                                         ; directory. This counter will be decremented until the correct entry is found
                                         ; or if we reach 0, which means that the file doesn't exist.
-    mov di, 0x0200                      ; Set the pointer for comparing the each character in the second stage file name
+    mov di, FAT_OFFSET                  ; Set the pointer for comparing the each character in the second stage file name
                                         ; to the start of the root directory.
 
     ;________________________________________ loopFilename _____________________________________________
@@ -160,8 +165,6 @@ loadRootDirectory:
 ;
 loadFAT:
     ; Firstly save the starting cluster of the boot image.
-    ;mov si, msgNewLine              ; Set the source pointer to the string to print. (Caret return, Line Feed)
-    ;call printString                ; print a new line.
     mov dx, word[di+0x001A]         ; Get the value of the 26th bit of the entry. This contains the first cluster of the FAT.
     mov word[cluster], dx           ; Get the files first cluster.
 
@@ -173,16 +176,15 @@ loadFAT:
 
     ; And calculate the location of the FAT.
     mov ax, word[bpbReservedSectors]; Adjust the location by adding the boot sector.
-    ; Read the FAT into memory at address 7c00:0200
-    mov bx, 0x0200                  ; Set the location to write the fat to.
-    call readSectors                ; Copy the file allocation table above the boot code at address 7c00:0200
 
-    ;mov si, msgNewLine              ; Set the source pointer to the string to print.
-    ;call printString                ; print the string to notify the user
-    mov ax, 0x0050                  ;
-    mov es, ax                      ; The destination for the image
-    mov bx, 0x0000                  ; The destination for the image
-    push bx                         ; push the destination to the stack.
+    ; Read the FAT into memory at address 7c00:0200
+    mov bx, FAT_OFFSET                  ; Set the location to write the fat to.
+    call readSectors                    ; Copy the file allocation table above the boot code at address 7c00:0200
+
+    mov ax, 0x0050                      ;
+    mov es, ax                          ; The destination for the image
+    mov bx, 0x0000                      ; The destination for the image
+    push bx                             ; push the destination to the stack.
 
 ;________________________________________________________________________________________________________________________/ § loadImage
 ;   Description:
@@ -190,40 +192,40 @@ loadFAT:
 ;
 loadImage:
     ; Reference the cluster from the file allocation table.
-    mov ax, word[cluster]       ; Set the address of the cluster we are going to read.
-    pop bx                      ; Get the bx from stack that contains the starting address of the image.
-    call convertChsToLba        ; Convert the cluster number to LBA (Logical Block Addressing).
-    mov cx, cx                  ; Zero the counter register.
+    mov ax, word[cluster]               ; Set the address of the cluster we are going to read.
+    pop bx                              ; Get the bx from stack that contains the starting address of the image.
+    call convertChsToLba                ; Convert the cluster number to LBA (Logical Block Addressing).
+    mov cx, cx                          ; Zero the counter register.
     mov cl, byte[bpbSectorsPerCluster]  ; Set the amount of sectors the cluster has.
-    call readSectors            ; Load the sectors to bx using ax as starting address, cl as the amount to read.
-    push bx                     ; Save the value of BX
+    call readSectors                    ; Load the sectors to bx using ax as starting address, cl as the amount to read.
+    push bx                             ; Save the value of BX
 
     ; Load the next cluster and Determine if the cluster is odd or even.
-    mov ax, word[cluster]       ; Identify the current cluster from the file allocation table.
-    mov cx, ax                  ; Copy the current cluster.
-    mov dx, ax                  ; Make a temporary copy to the data register so we can use it in a calculation.
-    shr dx, 0x0001              ; Divide by 2 using an logical right shift of 1
-    add cx, dx                  ; Sum the values (3/2)
-    mov bx, 0x0200              ; Set the data register to the address of the file allocation table.
-    add bx, cx                  ; Add the current index to the FAT base address.
-    mov dx, word[bx]            ; Read 2 bytes from the file allocation table.
-    test ax, 0x0001             ; Test the bit pattern 0001 on the cluster.
-    jnz .oddCluster             ; If the bit pattern didn't match its a odd cluster, jump to the routine that handles them.
+    mov ax, word[cluster]               ; Identify the current cluster from the file allocation table.
+    mov cx, ax                          ; Copy the current cluster.
+    mov dx, ax                          ; Make a temporary copy to the data register so we can use it in a calculation.
+    shr dx, 0x0001                      ; Divide by 2 using an logical right shift of 1
+    add cx, dx                          ; Sum the values (3/2)
+    mov bx, FAT_OFFSET                  ; Set the data register to the address of the file allocation table.
+    add bx, cx                          ; Add the current index to the FAT base address.
+    mov dx, word[bx]                    ; Read 2 bytes from the file allocation table.
+    test ax, 0x0001                     ; Test the bit pattern 0001 on the cluster.
+    jnz .oddCluster                     ; If the bit pattern didn't match its a odd cluster, jump to the routine that handles them.
 
     ; If the cluster is even, then take the 12 low bits.
     .evenCluster:
-        and dx, 0000111111111111b   ;
-        jmp .done                   ;
+        and dx, 0000111111111111b       ; Its an even cluster so take the lower 12 bits.
+        jmp .done                       ; And jump over the odd cluster routine.
 
     ; If the cluster is odd, then take the high 12 bits.
     .oddCluster:
-        shr dx, 0x0004          ;
+        shr dx, 0x0004                  ; It is an odd cluster so take the higher 12 bits.
 
     ; Then check if the sizes are correct.
     .done:
-        mov word[cluster], dx   ;
-        cmp dx, 0x0ff0          ; Compare the data register to 4080
-        jb loadImage            ; Move to the next
+        mov word[cluster], dx           ;
+        cmp dx, 0x0ff0                  ; Compare the data register to 4080
+        jb loadImage                    ; Move to the next
 
 ;________________________________________________________________________________________________________________________/ § executeNextStage
 ;   Description:
@@ -231,11 +233,9 @@ loadImage:
 ;   pointer to that location, so the second stage gets executed.
 ;
 executeNextStage:
-    mov si, msgNewLine      ; todo: remove this with an nice println macro
-    call printString        ;
-    push word 0x0050        ;
-    push word 0x0000        ;
-    retf
+    push word 0x0050                    ; Push the addess to jump to on the stack. 0x0050:0x0000
+    push word 0x0000                    ; Push the addess to jump to on the stack. 0x0050:0x0000
+    retf                                ; Call the return from caller function to jump the next stage.
 
 ;________________________________________________________________________________________________________________________/ § failure
 ;   Description:
@@ -243,11 +243,11 @@ executeNextStage:
 ;   (｡◕‿◕｡)⊃━☆ﾟ.*･｡ﾟ Happy debugging ԅ(≖‿≖ԅ)
 ;
 failure:
-    mov si, msgFailure      ; todo: remove this with my println macro
-    call printString        ;
-    xor ah, ah              ; Set 0 to the ax high byte as function.
-    int 0x16                ; Execute an BIOS interrupt that:
-    int 0x19                ; Reset the system.
+    mov si, msgFailure
+    call printString
+    xor ah,ah; not again!               ; Set 0 to the ax high byte as function.
+    int BIOS_INT_KEYBOARD               ; Execute an BIOS interrupt that:
+    int BIOS_INT_W_REBOOT               ; Reset the system. (Warm reboot)
 
 ;________________________________________________________________________________________________________________________/ ϝ printString
 ;   Description:
@@ -265,21 +265,21 @@ printString:
 
     .print_character:
         ; Load Data segment Byte
-        lodsb       ; Load byte from string addressed by DS:SI to the ax low register. The Direction Flag is clear so SI
-                    ; (source index) is incremented so we can get the next character if we need to print more characters.
-        or al, al   ; Do fast logical OR on the low byte of the accumulator low byte (containing an char of the string)
-        jz .return  ; Done printing, the if the loaded byte contains an zero the or will set the zero flag.
+        lodsb                           ; Load byte from string addressed by DS:SI to the ax low register. The Direction Flag is clear so SI
+                                        ; (source index) is incremented so we can get the next character if we need to print more characters.
+        or al, al                       ; Do fast logical OR on the low byte of the accumulator low byte (containing an char of the string)
+        jz .return                      ; Done printing, the if the loaded byte contains an zero the or will set the zero flag.
 
-        mov ah, 0x0e; Set the ASCII SO (shift out) character to the high byte of the accumulator.
-        int 0x10    ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the
-                    ; accumulator register contains an ASCII SO character this will determine the video function to
-                    ; perform. The low byte contains the argument of that function (a character), so combined it will
-                    ; shift out(ah) the character stored in al.
-        jmp .print_character ; Finished printing this character move to the next.
+        mov ah, ASCII_CRTL_SO           ; Set the ASCII SO (shift out) character to the high byte of the accumulator.
+        int BIOS_INT_VIDEO              ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the
+                                        ; accumulator register contains an ASCII SO character this will determine the video function to
+                                        ; perform. The low byte contains the argument of that function (a character), so combined it will
+                                        ; shift out(ah) the character stored in al.
+        jmp .print_character            ; Finished printing this character move to the next.
 
     .return:
-        popa    ; Restore the state of the CPU registers to before executing this function.
-        ret     ; The string is printed and the registers are restored so go back to the caller.
+        popa                            ; Restore the state of the CPU registers to before executing this function.
+        ret                             ; The string is printed and the registers are restored so go back to the caller.
 
 ;________________________________________________________________________________________________________________________/ ϝ readSectors
 ;   Description:
@@ -289,7 +289,7 @@ printString:
 ;
 readSectors:
     .main:
-        mov di, 0x0005  ; The amount of retries if an error occurs.
+        mov di, 0x0005                  ; The amount of retries if an error occurs.
     .readAnSector:
         push ax                         ; Save ax, that contains the starting address of the sectors to read.
         push bx                         ; Save bx, that contains the address to copy the read sectors to.
@@ -301,16 +301,17 @@ readSectors:
         mov cl, BYTE [absoluteSector]   ; sector
         mov dh, BYTE [absoluteHead]     ; head
         mov dl, BYTE [bsDriveNumber]    ; drive
-        int 0x13                        ; invoke BIOS
+        int BIOS_INT_DISK               ; invoke BIOS
         jnc .readedSuccessfull          ; test for read error
         xor ax, ax                      ; BIOS reset disk
-        int 0x13                        ; invoke BIOS
+        int BIOS_INT_DISK               ; invoke BIOS
         dec di                          ; decrement error counter
         pop cx                          ; Restore the state of the cx register.
         pop bx                          ; Restore the state of the bx register.
         pop ax                          ; Restore the state of the ax register.
         jnz .readAnSector               ; attempt to read again
-        int 0x18                        ; Reset and try again.
+        int BIOS_INT_REBOOT             ; Reset and try again.
+
     .readedSuccessfull:
         pop cx                          ; Restore the state of the cx register.
         pop bx                          ; Restore the state of the bx register.
@@ -322,46 +323,57 @@ readSectors:
 
 ;________________________________________________________________________________________________________________________/ ϝ readSectors
 ;   Description:
-;   This function converts CHS (Cylinder/Head/Sector) addressing to LBA (Logical Block Addressing).
+;   This function is responsible for converting CHS(Cylinder/Head/Sector) addressing to LBA (Logical Block Addressing)
+;   using the formula LBA = (cluster -2) * sectorPerCluster.
+;
+;   Function Arguments:
+;   ax      Is used to pass the cluster number.
 ;
 convertChsToLba:
-    sub ax, 0x0002                      ; The zero base cluster number
-    xor cx, cx                          ; Zero the counter register.
-    mov cl, byte[bpbSectorsPerCluster]  ; Convert the byte to an word.
-    mul cx                              ; Multiply cx with 2
-    add ax, word[datasector]            ; Set the base data sector.
-    ret                                 ; return to the caller.
+    sub ax, 0x0002                      ; Cluster number - 2
+    xor cx, cx                          ; Clear the counter
+    mov cl, byte[bpbSectorsPerCluster]  ; Get the amount of sectors in a cluster.
+    mul cx                              ; Multiply the cluster number minus 2 by the amount of sectors.
+    add ax, word[datasector]            ; And add the data sector offset to it.
+    ret
+
 ;________________________________________________________________________________________________________________________/ ϝ convertLbaToChs
 ;   Description:
-;   This function is responsible for converting LBA(Logical Block Addressing) to CHS(Cylinder/Head/Sector) using the
-;   formulas:
-;       Absolute sector     = (LBA % sectorPerTrack)+1
-;       Absolute head       = (LBA / sectorPerTrack) % numberOfHeads
-;       Absolute track      = LBA / ( sectorPerTrack * numberOfHeads)
-;                                                                                                           Input:  ax
+;   This function is responsible for converting LBA(Logical Block Addressing) to CHS(Cylinder/Head/Sector) and storing
+;   it in the global variables. It does this by using the formulas:
+;   Absolute sector     = (LBA / sectorPerTrack) + 1
+;   Absolute head       = (LBA / sectorPerTrack) % numberOfHeads
+;   Absolute track      = LBA / ( sectorPerTrack * numberOfHeads)
+;
+;   Function Arguments:
+;   ax      The LBA address that needs to be converted to CHS.
+;
 convertLbaToChs:
-    xor dx, dx
-    div word[bpbSectorsPerTrack]
-    inc dl
-    mov byte[absoluteSector],dl
-    xor dx, dx
-    div word[bpbHeadsPerCylinder]
-    mov byte[absoluteHead],dl
-    mov byte[absoluteTrack],al
+    xor dx, dx                          ; Clear dx
+    div word[bpbSectorsPerTrack]        ; Divide LBA by sectorPerTrack (the remainder is stored in dx).
+    inc dl                              ; Add 1 to the modulus of LBA
+    mov byte[absoluteSector],dl         ; Save the calculated absolute sector address
+    xor dx, dx                          ; Clear the value.
+    div word[bpbHeadsPerCylinder]       ; Divide LBA by the number number of heads. (dx has the remainder)
+    mov byte[absoluteHead],dl           ; Store the absolute head.
+    mov byte[absoluteTrack],al          ; Store the absolute track.
     ret
 
 ;________________________________________________________________________________________________________________________/ § Variables
 ;
-absoluteSector  db 0x00
-absoluteHead    db 0x00
-absoluteTrack   db 0x00
-datasector      dw 0x0000
-cluster         dw 0x0000
-imageName       db "STAGE2  BIN"
-msgLoading      db "Loading stage2...", 0
-msgNewLine      db 0x0A, 0x0D
-msgProgress     db ".", 0
-msgFailure      db "Error: press any key to destroy your computer."
+; CHS (Cylinder, Head, Sector) Addressing variables, they store the current locations on the floppy drive.
+absoluteSector  db 0x00                 ; The current sector its on the disk.
+absoluteHead    db 0x00                 ; The current head of the floppy drive.
+absoluteTrack   db 0x00                 ; The current track its on the floppy drives disk.
+
+; LBA (Logic Block Addressing) variables, they store the current locations using LBA.
+datasector      dw 0x0000               ; The current datasector.
+cluster         dw 0x0000               ; The current cluster.
+
+; Messages and file names.
+imageName       db "STAGE2  BIN"        ; The name of the second stage bootloader located on the FAT disk.
+msgLoading      db "Loading stage2...", NEWLN
+msgFailure      db "Error: press any key to destroy your computer.", NEWLN
 
 times 510-($-$$) db 0	; Pad remainder of boot sector with zeros
 dw 0x0AA55		; Bootable flag constant. If this constant is present at address 512 the bios marks the the sector as bootable.
