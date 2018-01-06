@@ -10,8 +10,8 @@
 %define __FAT12_ASM_INCLUDED__
 bits 16
 
-%include "./libs/stdio.asm"
-%include "./libs/Floppy16.asm"
+%include "libs/stdio.asm"
+%include "libs/Floppy16.asm"
 
 %define     ROOT_OFFSET     0x2E00 ; The location to load the root directory table and FAT.
 %define     FAT_SEGMENT     0x2C0   ; The location to load the fat in the segment registers.

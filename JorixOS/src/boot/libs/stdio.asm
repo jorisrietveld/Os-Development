@@ -8,6 +8,7 @@
 ;
 %ifndef __STDIO_ASM_INCLUDED__
 %define __STDIO_ASM_INCLUDED__
+
 bits 16
 
 %define DISPLAY_BIOS_INT    0x10    ; Bios interrupt for low level display services.

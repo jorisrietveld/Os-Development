@@ -46,10 +46,15 @@
 #   Created on: 04-01-2017 04:09                                                                                       #
 #
 JORIX_DIR="$(pwd)"
+JORIX_SCRIPT="$0"
 #________________________________________________________________________________________________________________________/ Options
 # File privileges for the generated files.
 : ${OUTPUT_PRIVILEGE_USER:="joris"}             # Replace this with your normal username or leave empty for auto detect.
 : ${OUTPUT_PRIVILEGE_LEVEL:="777"}              # File privileges on compiled binaries, 777 is bad
+
+# Quick settings, you can also specify them from the shell like: QUICK_BR=1 ./build.sh this will override
+# the setting in the build script
+: ${QUICK_BR:=0}                                # If set it will rebuild everything and execute it.
 
 # Some standard locations.
 : ${SRC_DIR_BOOT:="${JORIX_DIR}/src/boot"}      # The location of source code of the bootloader.
@@ -139,7 +144,7 @@ notify_debug(){
 extra_debug(){
     declare DEBUG_INPUT=${*:-$(</dev/stdin)}
     for PARAM in "${DEBUG_INPUT}"; do
-        for ERROR_SIGNAL in 'failed' 'error'; do
+        for ERROR_SIGNAL in 'failed' 'error' 'fatal'; do
             if [ -z "${PARAM##*$ERROR_SIGNAL*}" ] ;then
                 notify_error "${PARAM}"
                 exit 1
@@ -249,6 +254,10 @@ mount_floppy(){
     mount -v -o loop -t vfat "${_outFloppy}" "${FLOPPY_MOUNT}" 2>&1 | extra_debug || exit 1
     notify_success "Successfully mounted the floppy image at mount point: ${FLOPPY_MOUNT}\n"
 }
+restart_script(){
+    go_to_dir "$JORIX_DIR"
+    exec "$JORIX_SCRIPT"
+}
 clear
 mount_floppy
 
@@ -256,11 +265,12 @@ toilet -t -f 3D-ASCII 'Jorix OS' | boxes -d stark2 -a hc -p h8 | toilet --gay -f
 hr ".:" && print_center "Written By Joris Rietveld" && print_center "https://github.com/jorisrietveld" && hr
 print_center "Welcome to the Jorix OS build and run script." && hr
 #________________________________________________________________________________________________________________________/ Detect previous build
-if [ -f "${_outFloppy}" ]; then
+
+if [ -f "${_outFloppy}" ] && (( $QUICK_BR == 0 )); then
     notify_question "There was an previous build detected do you want to start it? (y/N)"
     if read -r && echo "$REPLY" | grep -iq "^y" ; then
         qemu-system-i386 -net none -boot a -drive format=raw,file="${_outFloppy}",index=0,if=floppy
-        exec "$0"
+        restart_script
     else
         notify_success "Starting a new project build.";
     fi
@@ -387,7 +397,7 @@ print_fancy pagga "Done building!"
 echo
 
 #________________________________________________________________________________________________________________________/ Cleanup
-if(( $DBG > 1 )) && (( $DISABLE_QUESTION == 0 )); then
+if(( $DBG > 1 )) && (( $DISABLE_QUESTION == 0 )) && (( $QUICK_BR == 0 )); then
     # Show generated output.
     notify_debug "The build script has generated the following files:"
     for i in "${GENERATED_BUILD_FILES[@]}"; do extra_debug "$i"; done
@@ -419,8 +429,11 @@ else
 fi
 
 # Wait for the user to decide if he want to run the build operation system.
-if read -r && echo "$REPLY" | grep -iq "^y" ; then
-    qemu-system-i386 -net none -boot a -drive format=raw,file="${_outFloppy}",index=0,if=floppy
+if (( $QUICK_BR == 1 )); then
+    start_os
+    restart_script
+elif read -r && echo "$REPLY" | grep -iq "^y" ; then
+   start_os
 else
     notify_success "Okey, you can also run it with run.sh";
 fi
