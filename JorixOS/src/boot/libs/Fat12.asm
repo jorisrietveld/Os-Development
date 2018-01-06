@@ -104,7 +104,7 @@ findFile:
     ; Check if there is an entry in the root directory that matches the file name.
     .checkEntry:
         push cx                     ; Save root directory counter so we can use the counter register for iterating over
-        mov cx, 0x000B              ; the file names in the root directory. Each file name is 11 characters long.
+        mov cx, 11                  ; the file names in the root directory. Each file name is 11 characters long.
         mov si, bx                  ; Set the file name to the si that will be used for string comparing.
         push di                     ; Store the starting index of the file name entry.
         rep cmpsb                   ; Iterate over stored entry and compare it with the file name. Remember cmpsb will
@@ -241,7 +241,7 @@ loadFile:
             xor ax, ax              ; Set the status code to 0 meaning success.
             ret
 
-debugMessage db "Error is here.", 0
+debugMessage db "Error is here.", 0x0A, 0x0D, 0
 
 %endif ; __FAT12_ASM_INCLUDED__
 

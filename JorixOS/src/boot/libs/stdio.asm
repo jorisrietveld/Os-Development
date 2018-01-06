@@ -27,6 +27,22 @@ printString16:
 		popa            ; restore registers
 		ret	            ; we are done, so return
 
+printNCharacter16:
+    pusha				; save registers
+
+    .print_char:
+        lodsb           ; load next byte from string from SI to AL
+        or	al, al      ; Does AL=0?
+        jz	.return		; Yep, null terminator found-bail out
+
+        mov	ah, 0x0E	; Nope-Print the character
+        int	0x10	    ; invoke BIOS
+        jmp	.print_char	    ; Repeat until null terminator found
+
+    .return:
+        popa            ; restore registers
+        ret	            ; we are done, so return
+
 ;_________________________________________________________________________________________________________________________/ § 32 bit IO
 ;   This section contains standard IO functions in 32 bits that are used when the CPU switched to Protected Mode.
 
