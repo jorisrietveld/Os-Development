@@ -17,8 +17,6 @@ bits 16
 %define     FAT_SEGMENT     0x2C0   ; The location to load the fat in the segment registers.
 %define     ROOT_SEGMENT    0x2E0   ; The location to load the root directory in the segment registers.
 
-
-
 ;________________________________________________________________________________________________________________________/ ϝ loadRootDirectory
 ;   Description:
 ;   This function is responsible for loading the root directory described in the FAT to location 0x7E00. This is the

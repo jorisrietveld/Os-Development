@@ -8,6 +8,9 @@
 %ifndef __COMMON_ASM_INCLUDED__
 %define __COMMON_ASM_INCLUDED__
 
+%include "libs/Ascii.asm"
+%include "libs/Bios.asm"
+
 %define IMAGE_PROTECTED_MODE_BASE 0x100000
 %define IMAGE_REAL_MODE_BASE 0x3000
 
