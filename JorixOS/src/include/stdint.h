@@ -2,6 +2,9 @@
  * Author: Joris Rietveld <jorisrietveld@gmail.com>
  * Date: 07-01-2018 01:56
  * Licence: GPLv3 - General Public Licence version 3
+ *
+ * Description:
+ * This header file defines the standard integer types for C and C++.
  */
 #ifndef OS_DEVELOPMENT_STDINT_H
 #define OS_DEVELOPMENT_STDINT_H

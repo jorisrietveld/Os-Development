@@ -1,0 +1,10 @@
+/**
+ * Author: Joris Rietveld <jorisrietveld@gmail.com>
+ * Date: 09-01-2018 14:26
+ * Licence: GPLv3 - General Public Licence version 3
+ */
+#ifndef OS_DEVELOPMENT_CSTDCTYPE
+#define OS_DEVELOPMENT_CSTDCTYPE
+#include <ctype.h>
+
+#endif // OS_DEVELOPMENT_CSTDCTYPE
