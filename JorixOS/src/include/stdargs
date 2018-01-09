@@ -1,0 +1,10 @@
+/**
+ * Author: Joris Rietveld <jorisrietveld@gmail.com>
+ * Date: 09-01-2018 15:30
+ * Licence: GPLv3 - General Public Licence version 3
+ */
+#ifndef OS_DEVELOPMENT_STDARGS
+#define OS_DEVELOPMENT_STDARGS
+#include <stdarg.h>
+
+#endif //OS_DEVELOPMENT_STDARGS_H
