@@ -10,14 +10,12 @@
 %define __FAT12_ASM_INCLUDED__
 bits 16
 
-%include "./libs/stdio.asm"
-%include "./libs/Floppy16.asm"
+%include "libs/stdio.asm"
+%include "libs/Floppy16.asm"
 
-%define     ROOT_OFFSET     0x02E00 ; The location to load the root directory table and FAT.
+%define     ROOT_OFFSET     0x2E00 ; The location to load the root directory table and FAT.
 %define     FAT_SEGMENT     0x2C0   ; The location to load the fat in the segment registers.
-%define     ROOT_SEGMENT    0x2C0   ; The location to load the root directory in the segment registers.
-
-
+%define     ROOT_SEGMENT    0x2E0   ; The location to load the root directory in the segment registers.
 
 ;________________________________________________________________________________________________________________________/ ϝ loadRootDirectory
 ;   Description:
@@ -119,8 +117,6 @@ findFile:
     ;_______________________ Return Error ________________________
     ; No entry found that matches the file name, return status -1.
     .notFound:
-        mov si, debugMessage
-        call printString16
         pop bx                      ; Restore the base,
         pop dx                      ; data and
         pop cx                      ; counter registers from stack.
@@ -240,9 +236,6 @@ loadFile:
             pop ecx                 ; extended counter registers.
             xor ax, ax              ; Set the status code to 0 meaning success.
             ret
-
-debugMessage db "Error is here.", 0
-
 %endif ; __FAT12_ASM_INCLUDED__
 
 ;

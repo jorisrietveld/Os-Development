@@ -27,8 +27,9 @@ sides  	            dw 2            ; The amount of reading heads above each oth
 hiddenSectors  	    dd 0            ; The amount of sectors between the physical start of the disk and filesystem.
 largeSectors        dd 0            ; The total amount of lage sectors.
 driveNumber  	    db 0            ; 0 because this is the standard for floppy disks.
+unused              db 9
 bootSig  	        db 0x29         ; The boot signature of: MS/PC-DOS Version 4.0
-serial 	            dd 0x00000000   ; This gets overwritten every time the image get written.
+serial 	            dd 0xa0a1a2a3   ; This gets overwritten every time the image get written.
 volumeLabel  	    db "MOS FLOPPY "; The label of the volume.
 filesystem  	    db "FAT12   "   ; The type of file system.
 
@@ -42,7 +43,7 @@ absoluteSector db 0x00  ; Data sector in CHS (Cylinder Head Sector) addressing.
 absoluteHead   db 0x00  ; Head in CHS (Cylinder Head Sector) addressing.
 absoluteTrack  db 0x00  ; Track in CHS (Cylinder Head Sector) addressing.
 
-%define     MAX_DISK_ERROR_RETRIES 0x0005
+%include 'libs/Common.asm'
 
 ;________________________________________________________________________________________________________________________/ ϝ convertCHStoLBA
 ;   Description:
@@ -93,7 +94,7 @@ convertLBAtoCHS:
 ;
 readSectors:
     .start:
-        mov di, MAX_DISK_ERROR_RETRIES  ; Set an limited amount of retries.
+        mov di, 0x0005  ; Set an limited amount of retries.
 
     ;______________________________________ Sector Read Iteration_________________________________________
     ; Convert the address to chs and execute interrupt 0x13 to load n(cx) amount of sectors from the disk.
@@ -108,18 +109,18 @@ readSectors:
         mov cl, byte[absoluteSector]    ; Set the sector
         mov dh, byte[absoluteHead]      ; Set the head
         mov dl, byte[driveNumber]       ; Set the drive to use.
-        int 0x13                        ; Use the BIOS interrupt to read 1 sector
+        int BIOS_INT_DISK               ; Use the BIOS interrupt to read 1 sector
         jnc .finished                   ; Check if there were no errors. (the BIOS will set the carry flag on error)
 
         ; Error reading the sector
         xor ax, ax                      ; Clear ax, 0x0 is the bios reset disk instruction.
-        int 0x13                        ; Execute the reset disk using the BIOS interrupt.
+        int BIOS_INT_DISK               ; Execute the reset disk using the BIOS interrupt.
         dec di                          ; Reading the sector failed so subtract 1 from the maximum retry amount.
         pop cx
         pop bx
         pop ax
         jnz .readSector                 ; If the retry amount is above 0 try reading the sector again.
-        int 0x18                        ; It failed 5 times... reboot the system.
+        int BIOS_INT_REBOOT             ; It failed 5 times... reboot the system.
     ;______________________________________ Read success _________________________________________
     ; Convert the address to chs and execute interrupt 0x13 to load n(cx) amount of sectors from the disk.
     .finished:

@@ -1,4 +1,4 @@
-;_________________________________________________________________________________________________________________________/ Stage2.asm
+;________________branch_____further________________________________________________________________________________________/ Stage2.asm
 ;   Author: Joris Rietveld  <jorisrietveld@gmail.com>
 ;   Created: 03-01-2018 00:28
 ;
@@ -14,17 +14,18 @@ org 0x500               ; Offset to address 0x50:0
 
 jmp main                ; Jump to main.
 
-%include "./libs/stdio.asm"     ; This file contains IO functions for real and protected mode.
-%include "./libs/Gdt.asm"       ; This file contains the General Descriptor Table.
-%include "./libs/A20.asm"       ; This file contains functions for changing the A20 gate.
-%include "./libs/Fat12.asm"     ; This file contains an FAT12 driver.
-%include "./libs/Common.asm"    ; This file contains global data like variables, macros and constants.
+%include "libs/stdio.asm"     ; This file contains IO functions for real and protected mode.
+%include "libs/Gdt.asm"       ; This file contains the General Descriptor Table.
+%include "libs/A20.asm"       ; This file contains functions for changing the A20 gate.
+%include "libs/Fat12.asm"     ; This file contains an FAT12 driver.
+%include "libs/Common.asm"    ; This file contains global data like variables, macros and constants.
+%include "libs/Ascii.asm"     ;
 
 ;________________________________________________________________________________________________________________________/ § data section
-msg_gdt     db "Installed GDT...", 0x0D, 0x0A, 0   ; Create an message.
-msg_a20     db "Enabled the A20 line...", 0x0D, 0x0A, 0   ; Create an message.
-msg_switch  db "Switching the CPU into protected mode...", 0x0D, 0x0A, 0   ; Create an message.
-msg_fail    db "Error loading the kernel", 0x0D, 0x0A, 0
+msg_gdt     db "Installed GDT...", NEWLN  ; Create an message.
+msg_a20     db "Enabled the A20 line...", NEWLN   ; Create an message.
+msg_switch  db "Switching the CPU into protected mode...", NEWLN   ; Create an message.
+msg_fail    db "Error loading the kernel", NEWLN
 ;________________________________________________________________________________________________________________________/ § text section
 ;   Description:
 ;   The second stage of the bootloader, this stage executes after the bootstrap loader is finished preparing the system.
@@ -43,15 +44,8 @@ main:
 
     ; Define GDT
     call InstallGDT             ; Install the global descriptor table in the GDTR of the CPU.
-    mov si, msg_gdt
-    call printString16          ; Print status message to the user using macro defined in x16 stdio.asm
-
-    ; Enable A20
     call enable_A20             ; Enable the A20 line by flipping the A20 gate.
-    mov si, msg_a20
-    call printString16          ; Print status message to the user using macro defined in x16 stdio.asm
-
-    call loadRootDirectory
+    call loadRootDirectory      ; Load the root directory in to memory.
 
     mov	ebx, 0                  ; BX:BP points to buffer to load to
     mov	bp, IMAGE_REAL_MODE_BASE
@@ -95,7 +89,7 @@ copyImage:
     mov eax, dword[ImageSize]
     movzx ebx, word[sectorSize]
     mul ebx
-    mov ebx, 0x4
+    mov ebx, 4
     div ebx
     cld
     mov esi, IMAGE_REAL_MODE_BASE
@@ -107,57 +101,3 @@ copyImage:
 
     cli                     ; Clear all interrupts.
     hlt                     ; And halt the system.
-
-    call clearDisplay32
-printBootMenu:
-    ; Print the title of the menu page.
-    mov ebx, TITLE
-    call printString32
-
-    .printBootOptions:
-        ; Print the menu and its options.
-        mov ebx, MENU_HR
-        call printString32
-
-        mov ebx, MENU_OPT_1
-        call printString32
-
-        mov ebx, MENU_OPT_2
-        call printString32
-
-        mov ebx, MENU_OPT_3
-        call printString32
-
-        mov ebx, MENU_OPT_4
-        call printString32
-
-        mov ebx, MENU_FOOTER
-        call printString32
-
-        mov ebx, MENU_SELECT_0
-        call printString32
-
-stop: ; Halt and catch fire...
-    cli
-    hlt
-
-TITLE           times 2 db  0x0A
-                db "________________________________[ Jorix OS ]____________________________________",0x0A
-                times 80 db "="
-                db          0x0A, 0
-MENU_HR         db "                NUM    OPTIONS", 0x0A, 0
-MENU_OPT_1      db "                [1]    Start JoriX OS in normal mode.", 0x0A, 0
-MENU_OPT_2      db "                (2)    Start JoriX OS in recovery mode.", 0x0A, 0
-MENU_OPT_3      db "                (3)    Start JoriX OS in debuggin mode.", 0x0A, 0
-MENU_OPT_4      db "                (4)    Start Teteris.", 0x0A, 0
-MENU_OPT_5      db "                (5)    Shutdown the pc.", 0x0A, 0
-MENU_FOOTER     times 80 db "="
-                db 0x0A, 0
-MENU_SELECT_0   db "               Please use your arrow keys to select an option.   ", 0x0A, 0
-MENU_SELECT_1   db "               Press enter to start Jorix OS in normal mode   ", 0x0A, 0
-MENU_SELECT_2   db "               Press enter to start Jorix OS in recovery modes.", 0x0A, 0
-MENU_SELECT_3   db "               Press enter to start Jorix OS with debugging tools.", 0x0A, 0
-MENU_SELECT_4   db "               Press enter to play teteris.", 0x0A, 0
-MENU_SELECT_5   db "               Press enter to shutdown your pc.", 0x0A, 0
-
-

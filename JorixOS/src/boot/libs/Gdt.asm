@@ -32,55 +32,45 @@ InstallGDT:
 ;   Description:
 ;   The segment descriptors that define what types of segments are available.
 gdt_data:
-	dd 0            ; null descriptor (Double word, 4 byte)
-	dd 0            ; null descriptor (Double word, 4 byte)
-    ;_______________________ GDT code descriptor ___________________________
-    ; Describes an segment that can be used for executable instructions.
-    ;11111111 11111111 00000000 00000000 00000000 10011010 11001111 00000000
-	dw 0xFFFF       ; Segmentation limit low bits 0-15
-	dw 0            ; Base address low bits 16-30
-	db 0            ; base address middle bits 31-39
-	db 0b10011010   ; access bits 40 - 47:
-	    ;Bit  Bit(GDT)  Description
-        ; 0     40      Access bit (Used with virtual memory), set to 0 because we don't use virtual memory.
-        ; 1     41      Readable/Writeable bit, it is set to 1 to allow reading and executing instructions.
-        ; 2     42      Expansion direction bit, set to 0
-        ; 3     43      Code/Data descriptor, set to 1 because this is an code descriptor.
-        ; 4     44      System Code/Data descriptor, set to 1 because it is an code descriptor for the kernel.
-        ; 5-6   45-46   Ring level bit, set to 00 this descriptor allows for ring 0 code.
-        ; 7     47      In memory bit (Used with virtual memory), set to 0 because we don't use virtual memory.
-	db 0b11001111   ; granularity bits 48-55
-	    ;Bit  Bit(GDT)  Description
-        ; 0-3   48-51  The segmentation limit, set to 0xF this means we can access up to 0xffff byte of memory.
-        ; 4     52     OS reserved, for now set it to 0.
-        ; 5     53     reserved, can be for everything for now set it to 0.
-        ; 6     54     Segmentation type (16/32), Set to 1 for an 32 bits system.
-        ; 7     55     Granularity, set it to 1 to make every segment bound to 4 KB
+    ; null descriptor.
+	dd 0
+	dd 0
+
+    ;__________________ Kernel Space Code Descriptor (offset: 0x08) ____________________
+    ; Describes an segment that can be used for ring 0 (kernel) executable instructions.
+	dw 0xFFFF       ; Segmentation limit low bits.
+	dw 0            ; Base address low bits.
+	db 0            ; base address middle bits.
+	db 0b10011010   ; access bits, Bits 5 & 6 define the privilege level ring 0.
+	db 0b11001111   ; granularity bits.
 	db 0            ; base high (starting address), set to 0 because programmers count from zero (⌐■_■).
-	;
-    ;___________________________ GDT code descriptor __________________________
-    ; Describes an segment that can be used for storing variables and constants
-    ; 11111111 11111111 00000000 00000000 00000000 10010010 11001111 00000000
-	dw 0xFFFF       ; Segmentation limit low bits 0-15
-	dw 0            ; Base address low bits 16-30
-	db 0            ; base address middle bits 31-39
-	db 0b10010010   ; access bits 40 - 47
-	    ;Bit  Bit(GDT)  Description
-        ; 0     40      Access bit (Used with virtual memory), set to 0 because we don't use virtual memory.
-        ; 1     41      Readable/Writeable bit, it is set to 1 to allow reading and executing instructions.
-        ; 2     42      Expansion direction bit, set to 0
-        ; 3     43      Code/Data descriptor, set to 0 because this is an data descriptor.
-        ; 4     44      System Code/Data descriptor, set to 1 because it is an code descriptor for the kernel.
-        ; 5-6   45-46   Ring level bit, set to 00 this descriptor allows for ring 0 code.
-        ; 7     47      In memory bit (Used with virtual memory), set to 0 because we don't use virtual memory.
-	db 0b11001111   ; granularity bits 48-55
-        ;Bit  Bit(GDT)  Description
-        ; 0-3   48-51  The segmentation limit, set to 0xF this means we can access up to 0xffff byte of memory.
-        ; 4     52     OS reserved, for now set it to 0.
-        ; 5     53     reserved, can be for everything for now set it to 0.
-        ; 6     54     Segmentation type (16/32), Set to 1 for an 32 bits system.
-        ; 7     55     Granularity, set it to 1 to make every segment bound to 4 KB
-	db 0            ; base high (starting address), set to 0 because programmers count from zero (⌐■_■).
+
+    ;__________________ Kernel Space Data Descriptor (offset: 0x16) ____________________
+    ; Describes an segment that can be used for storing ring 0 (kernel) accessible data.
+	dw 0xFFFF       ; Segmentation limit low bits.
+	dw 0            ; Base address low bits.
+	db 0            ; base address middle bits.
+	db 0b10010010   ; access bits, Bits 5 & 6 define the privilege level ring 0.
+	db 0b11001111   ; granularity bits.
+	db 0            ; base high (starting address).
+
+	;__________________ User Space Code Descriptor (offset: 0x24) ____________________
+    ; Describes an segment that can be used for ring 3 executable instructions.
+    dw 0xFFFF       ; Segmentation limit low bits.
+    dw 0            ; Base address low bits.
+    db 0            ; base address middle bits.
+    db 0b11111010   ; access bits, Bits 5 & 6 define the privilege level ring 3
+    db 0b11001111   ; granularity bits.
+    db 0            ; base high (starting address).
+
+    ;__________________ User Space Data Descriptor (offset: 0x32) ____________________
+    ; Describes an segment that can be used for storing ring 3 accessible data.
+    dw 0xFFFF       ; Segmentation limit low bits.
+    dw 0            ; Base address low bits.
+    db 0            ; base address middle bits.
+    db 0b10010010   ; access bits, Bits 5 & 6 define the privilege level ring 3.
+    db 0b11110010   ; granularity bits.
+    db 0            ; base high (starting address).
 
 end_of_gdt:
 
@@ -93,3 +83,18 @@ toc:    ;
 %define DATA_DESC 0x10
 
 %endif ;__GDT_ASM_INCLUDED__
+;Bit  Bit(GDT)  Description
+; 0     40      Access bit (Used with virtual memory), set to 0 because we don't use virtual memory.
+; 1     41      Readable/Writeable bit, it is set to 1 to allow reading and executing instructions.
+; 2     42      Expansion direction bit, set to 0
+; 3     43      Code/Data descriptor, set to 0 because this is an data descriptor.
+; 4     44      System Code/Data descriptor, set to 1 because it is an code descriptor for the kernel.
+; 5-6   45-46   Ring level bit, set to 00 this descriptor allows for ring 0 code.
+; 7     47      In memory bit (Used with virtual memory), set to 0 because we don't use virtual memory.
+
+;Bit  Bit(GDT)  Description
+; 0-3   48-51  The segmentation limit, set to 0xF this means we can access up to 0xffff byte of memory.
+; 4     52     OS reserved, for now set it to 0.
+; 5     53     reserved, can be for everything for now set it to 0.
+; 6     54     Segmentation type (16/32), Set to 1 for an 32 bits system.
+; 7     55     Granularity, set it to 1 to make every segment bound to 4 KB
