@@ -7,7 +7,7 @@ nasm -d DEBUG -f bin second_stage.asm -o STAGE2.SYS
 echo "size of the second stage bootloader is" `stat -c "%s" STAGE2.SYS`
 hexdump STAGE2.SYS
 
-cat stage1.bin STAGE2.SYS > boot.img
+cat stage1.bin STAGE2.SYS >> boot.img
 echo "size of the second stage bootloader is" `stat -c "%s" boot.img`
 hexdump boot.img
 
