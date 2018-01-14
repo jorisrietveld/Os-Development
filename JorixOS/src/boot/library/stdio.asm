@@ -9,7 +9,7 @@
 %ifndef __STDIO_ASM_INCLUDED__
 %define __STDIO_ASM_INCLUDED__
 
-%include 'libs/Common.asm'
+%include 'include/common.asm'
 
 bits 16
 

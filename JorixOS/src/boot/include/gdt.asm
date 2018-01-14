@@ -41,8 +41,8 @@ gdt_data:
 	dw 0xFFFF       ; Segmentation limit low bits.
 	dw 0            ; Base address low bits.
 	db 0            ; base address middle bits.
-	db 0b10011010   ; access bits, Bits 5 & 6 define the privilege level ring 0.
-	db 0b11001111   ; granularity bits.
+	db 10011010b   ; access bits, Bits 5 & 6 define the privilege level ring 0.
+	db 11001111b   ; granularity bits.
 	db 0            ; base high (starting address), set to 0 because programmers count from zero (⌐■_■).
 
     ;__________________ Kernel Space Data Descriptor (offset: 0x16) ____________________
@@ -50,27 +50,27 @@ gdt_data:
 	dw 0xFFFF       ; Segmentation limit low bits.
 	dw 0            ; Base address low bits.
 	db 0            ; base address middle bits.
-	db 0b10010010   ; access bits, Bits 5 & 6 define the privilege level ring 0.
-	db 0b11001111   ; granularity bits.
+	db 10010010b   ; access bits, Bits 5 & 6 define the privilege level ring 0.
+	db 11001111b   ; granularity bits.
 	db 0            ; base high (starting address).
 
 	;__________________ User Space Code Descriptor (offset: 0x24) ____________________
     ; Describes an segment that can be used for ring 3 executable instructions.
-    dw 0xFFFF       ; Segmentation limit low bits.
-    dw 0            ; Base address low bits.
-    db 0            ; base address middle bits.
-    db 0b11111010   ; access bits, Bits 5 & 6 define the privilege level ring 3
-    db 0b11001111   ; granularity bits.
-    db 0            ; base high (starting address).
+    ;dw 0xFFFF       ; Segmentation limit low bits.
+    ;dw 0            ; Base address low bits.
+    ;db 0            ; base address middle bits.
+    ;db 0b11111010   ; access bits, Bits 5 & 6 define the privilege level ring 3
+    ;db 0b11001111   ; granularity bits.
+    ;db 0            ; base high (starting address).
 
-    ;__________________ User Space Data Descriptor (offset: 0x32) ____________________
-    ; Describes an segment that can be used for storing ring 3 accessible data.
-    dw 0xFFFF       ; Segmentation limit low bits.
-    dw 0            ; Base address low bits.
-    db 0            ; base address middle bits.
-    db 0b10010010   ; access bits, Bits 5 & 6 define the privilege level ring 3.
-    db 0b11110010   ; granularity bits.
-    db 0            ; base high (starting address).
+    ;;__________________ User Space Data Descriptor (offset: 0x32) ____________________
+    ;; Describes an segment that can be used for storing ring 3 accessible data.
+    ;dw 0xFFFF       ; Segmentation limit low bits.
+    ;dw 0            ; Base address low bits.
+    ;db 0            ; base address middle bits.
+    ;db 0b10010010   ; access bits, Bits 5 & 6 define the privilege level ring 3.
+    ;db 0b11110010   ; granularity bits.
+    ;db 0            ; base high (starting address).
 
 end_of_gdt:
 

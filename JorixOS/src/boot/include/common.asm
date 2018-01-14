@@ -8,13 +8,15 @@
 %ifndef __COMMON_ASM_INCLUDED__
 %define __COMMON_ASM_INCLUDED__
 
-%include "libs/Ascii.asm"
-%include "libs/Bios.asm"
+%include "include/ascii.asm"
+%include "include/bios.asm"
+%include "include/global_variables.asm"
 
 %define IMAGE_PROTECTED_MODE_BASE 0x100000
 %define IMAGE_REAL_MODE_BASE 0x3000
 
-ImageName   db  "KERNEL  SYS"
+
+ImageName   db BOOTLOADER2_FILENAME
 ImageSize   db  0
 
 %endif ; __COMMON_ASM_INCLUDED__

@@ -14,18 +14,26 @@ org 0x500               ; Offset to address 0x50:0
 
 jmp main                ; Jump to main.
 
-%include "libs/stdio.asm"     ; This file contains IO functions for real and protected mode.
-%include "libs/Gdt.asm"       ; This file contains the General Descriptor Table.
-%include "libs/A20.asm"       ; This file contains functions for changing the A20 gate.
-%include "libs/Fat12.asm"     ; This file contains an FAT12 driver.
-%include "libs/Common.asm"    ; This file contains global data like variables, macros and constants.
-%include "libs/Ascii.asm"     ;
+%include "library/stdio.asm"     ; This file contains IO functions for real and protected mode.
+%include "include/gdt.asm"       ; This file contains the General Descriptor Table.
+%include "include/a20.asm"       ; This file contains functions for changing the A20 gate.
+%include "library/fat12.asm"     ; This file contains an FAT12 driver.
+%include "include/common.asm"    ; This file contains global data like variables, macros and constants.
+%include "include/ascii.asm"     ;
+%include "include/global_variables.asm" ;
 
 ;________________________________________________________________________________________________________________________/ § data section
-msg_gdt     db "Installed GDT...", NEWLN  ; Create an message.
-msg_a20     db "Enabled the A20 line...", NEWLN   ; Create an message.
+msgGdt1     db "Installing the GDT...", 0x0A, 0x0D, 0  ; Create an message.
+msgGdt2     db "The GDT is installed!", 0x0A, 0x0D, 0  ; Create an message.
+
+msgA201     db "Switching the A20 gate to enable the A20 line...", 0x0A, 0x0D, 0  ; Create an message.
+msgA202     db "A20 line is enabled!", 0x0A, 0x0D, 0   ; Create an message.
+
+msgLoadRoot db "Loading the root directory...", 0x0A, 0x0D, 0
+
 msg_switch  db "Switching the CPU into protected mode...", NEWLN   ; Create an message.
-msg_fail    db "Error loading the kernel", NEWLN
+msg_fail    db "Error loading the kernel", NEWLN    ;
+
 ;________________________________________________________________________________________________________________________/ § text section
 ;   Description:
 ;   The second stage of the bootloader, this stage executes after the bootstrap loader is finished preparing the system.
@@ -83,7 +91,7 @@ stage3:
     mov ds, ax              ; Move the data segment to the address 0x10.
     mov ss, ax              ; Move the stack segment to the address 0x10.
     mov es, ax              ; Move the extra segment to the address 0x10.
-    mov esp, 0x9000         ; Move the top of the stack to location 0x9000.
+    mov esp, 90000h         ; Move the top of the stack to location 0x9000.
 
 copyImage:
     mov eax, dword[ImageSize]

@@ -10,12 +10,12 @@
 %define __FAT12_ASM_INCLUDED__
 bits 16
 
-%include "libs/stdio.asm"
-%include "libs/Floppy16.asm"
+%include "library/stdio.asm"
+%include "library/floppy16.asm"
 
-%define     ROOT_OFFSET     0x2E00 ; The location to load the root directory table and FAT.
-%define     FAT_SEGMENT     0x2C0   ; The location to load the fat in the segment registers.
-%define     ROOT_SEGMENT    0x2E0   ; The location to load the root directory in the segment registers.
+%define     ROOT_OFFSET     0x2e00 ; The location to load the root directory table and FAT.
+%define     FAT_SEGMENT     0x2c0   ; The location to load the fat in the segment registers.
+%define     ROOT_SEGMENT    0x2e0   ; The location to load the root directory in the segment registers.
 
 ;________________________________________________________________________________________________________________________/ ϝ loadRootDirectory
 ;   Description:
@@ -44,7 +44,7 @@ loadRootDirectory:
     ; Read the root directory into 0x7c00
     push word ROOT_SEGMENT          ; Push the root segment addess on to the stack.
     pop es                          ; Pop the extra segment from the stack.
-    xor bx, bx                      ; Set the address to 0
+    mov bx, 0x0                     ; Set the address to 0
     call readSectors                ; Call the function that copies all sectors from the disk to ram.
     pop es                          ; Remove extra segment from stack.
     popa                            ; Restore all registers.
@@ -102,7 +102,7 @@ findFile:
     ; Check if there is an entry in the root directory that matches the file name.
     .checkEntry:
         push cx                     ; Save root directory counter so we can use the counter register for iterating over
-        mov cx, 0x000B              ; the file names in the root directory. Each file name is 11 characters long.
+        mov cx, 11                  ; the file names in the root directory. Each file name is 11 characters long.
         mov si, bx                  ; Set the file name to the si that will be used for string comparing.
         push di                     ; Store the starting index of the file name entry.
         rep cmpsb                   ; Iterate over stored entry and compare it with the file name. Remember cmpsb will
@@ -158,14 +158,17 @@ loadFile:
         jne .loadFilePreparation   ; No errors found jump over error handling.
 
         ; Error handling.
+        ; mov si, msgFileNotInDirectoryTable
+        ; call printString16
         pop bp                      ; Restore the base pointer,
         pop bx                      ; base,
         pop ecx                     ; extended counter registers from stack.
         mov ax, -1                  ; Set the status code to -1 to signal an error.
         ret
     ;_______________________ Return Success ________________________
-    ; No entry found that matches the file name, return status -1.
     .loadFilePreparation:
+        ; mov si, msgFileFoundInDirectoryTable
+        ; call printString16
         sub edi, ROOT_OFFSET
         sub eax, ROOT_OFFSET
 
@@ -175,14 +178,14 @@ loadFile:
         mov dx, word[es:di + 0x001A]; Get the files first cluster, es:di contains the FAT entry index after calling the
                                     ; find file function. The 2 byes(word) in the FAT entry at 0x1A (bytes 26-27) are
                                     ; used to store the first cluster. More info at end of this file.
-        mov word[ cluster ], dx     ; Store it in the cluster variable.
+        mov word[cluster], dx     ; Store it in the cluster variable.
         pop bx                      ; Get the location to write to stored on the stack.
         pop es                      ;
         push bx                     ; Store the location for later usage.
         push es                     ;
         call loadFAT                ; Now the first cluster is known load the FAT.
 
-    .loadFile:
+    .loadImage:
         mov ax, word[cluster]       ; Prepare converting the file starting cluster to LBA.
         pop es                      ; Get the cluster to read.
         pop bx                      ;
@@ -228,7 +231,7 @@ loadFile:
         .finishedCluster:
             mov word[cluster], dx   ;
             cmp dx, 0x0ff0          ; Compare the data register to 4080 (Constant for end of file marker)
-            jb loadFile             ; Move to the next
+            jb .loadImage           ; Move to the next
 
         .success:
             pop es                  ; Restore the extra segment.

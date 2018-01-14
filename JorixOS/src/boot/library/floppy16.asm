@@ -43,7 +43,7 @@ absoluteSector db 0x00  ; Data sector in CHS (Cylinder Head Sector) addressing.
 absoluteHead   db 0x00  ; Head in CHS (Cylinder Head Sector) addressing.
 absoluteTrack  db 0x00  ; Track in CHS (Cylinder Head Sector) addressing.
 
-%include 'libs/Common.asm'
+%include 'include/common.asm'
 
 ;________________________________________________________________________________________________________________________/ ϝ convertCHStoLBA
 ;   Description:

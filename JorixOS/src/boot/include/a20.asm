@@ -17,7 +17,7 @@
 %define __A20_ASM_INCLUDED__
 bits 16
 
-%include 'libs/Common.asm'
+%include 'include/common.asm'
 ;_________________________________________________________________________________________________________________________/ ϝ disable_A20
 ;   Description:
 ;   This function will enable the A20 line by flipping the A20 Gate using different methods. If it doesnt work on your

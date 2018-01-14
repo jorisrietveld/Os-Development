@@ -66,8 +66,9 @@ bsSerialNumber 	        dd 0x00000000   ; This gets overwritten every time the i
 bsVolumeLabel  	        db "JORIX OS   "; The label of the volume.
 bsFileSystem  	        db "FAT12   "   ; The type of file system.
 
-%include "libs/Ascii.asm"
-%include "libs/Bios.asm"
+%include "include/ascii.asm"
+%include "include/bios.asm"
+%include "include/global_variables.asm"
 
 %define SEGMENT_OFFSET  0x7c0           ; Offset from where all code should start.
 %define FAT_OFFSET      0x0200          ; Offset to load FAT to.
@@ -371,13 +372,11 @@ datasector      dw 0x0000               ; The current datasector.
 cluster         dw 0x0000               ; The current cluster.
 
 ; Messages and file names.
-imageName       db "STAGE2  BIN"        ; The name of the second stage bootloader located on the FAT disk.
+;imageName      db "STAGE2  BIN"        ; The name of the second stage bootloader located on the FAT disk.
+;imageName       db "BTLOAD1 BIN"         ; The name of the second stage bootloader located on the FAT disk.
+imageName       db BOOTLOADER1_FILENAME         ; The name of the second stage bootloader located on the FAT disk.
 msgLoading      db "Loading stage2...", NEWLN
 msgFailure      db "Error: press any key to destroy your computer.", NEWLN
 
 times 510-($-$$) db 0	; Pad remainder of boot sector with zeros
-dw 0x0AA55		; Bootable flag constant. If this constant is present at address 512 the bios marks the the sector as bootable.
-
-buffer:
-
-
+dw 0x0AA55		; Bootable flag constant. If this constant is present at address 512 the bios marks the the sector as bootable

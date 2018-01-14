@@ -58,29 +58,29 @@ JORIX_SCRIPT="$0"
 
 # Some standard locations.
 : ${SRC_DIR_BOOT:="${JORIX_DIR}/src/boot"}      # The location of source code of the bootloader.
-: ${SRC_DIR_KERNEL="${JORIX_DIR}/src/kernel"}   # The location of assembly source code of the kernel.
+: ${SRC_DIR_BOOT="${JORIX_DIR}/src/boot"}   # The location of assembly source code of the kernel.
 : ${OUT_DIR_IMAGES:="${JORIX_DIR}/disk_images"} # The location of bootable disk images.
 : ${OUT_DIR_BOOT:="${SRC_DIR_BOOT}"}            # The location of the compiled bootloader.
-: ${OUT_DIR_KERNEL="${SRC_DIR_KERNEL}"}         # The location of the compiled assembly kernel.
+: ${OUT_DIR_KERNEL="${SRC_DIR_BOOT}"}         # The location of the compiled assembly kernel.
 : ${FLOPPY_MOUNT="${JORIX_DIR}/loopback_flp"}   # The temporary directory used to mount the floppy at.
 
 # The base names of the source files.
 : ${BOOTSTRAP_BASE:="bootstrap"}                # The name of 512 byte bootstrap loader.
-: ${BOOTLOADER_BASE:="stage2"}                  # The name of kernel-loader/stage2-bootloader.
-: ${KERNEL_ASM_BASE:="kernel"}                  # The name of the first kernel written in assembly.
+: ${BOOTLOADER_BASE:="bloader1"}                # The name of kernel-loader/stage2-bootloader.
+: ${KERNEL_ASM_BASE:="bloader2"}                # The name of the first kernel written in assembly.
 : ${DISK_IMAGE_BASE:="JorixOS"}                 # The name of the disk images that will be created.
 
 # Generated binaries and images by the script
 : ${BOOTSTRAP_OUT:="${BOOTSTRAP_BASE}.bin"}     # The bootstrap binary, gets copied in the first sector of the image.
 : ${BOOTLOADER_OUT:="${BOOTLOADER_BASE}.bin"}   # The second stage, gets copied on the FAT12's root directory.
-: ${KERNEL_ASM_OUT:="${KERNEL_ASM_BASE}.sys"}               # The kernel written is asm also stored on the root directory.
+: ${KERNEL_ASM_OUT:="${KERNEL_ASM_BASE}.bin"}               # The kernel written is asm also stored on the root directory.
 : ${FLOPPY_IMAGE_OUT:="${DISK_IMAGE_BASE}.flp"} # The name of bootable floppy image.
 : ${CD_ISO_IMAGE_OUT:="${DISK_IMAGE_BASE}.iso"} # The name of bootable cd disk image converted from the floppy.
 
 # The files containing the assembly source code
 : ${BOOTSTRAP_IN:="${BOOTSTRAP_BASE}.asm"}      # Source of the bootstrap bootloader (located in first 512 bytes).
-: ${BOOTLOADER_IN:="${BOOTLOADER_BASE}.asm"}    # Source of the second stage of the bootloader, loads the kernel.
-: ${KERNEL_ASM_IN:="${KERNEL_ASM_BASE}.asm"}    # Source of the first kernel version still written in assembly.
+: ${BOOTLOADER_IN:="bootload1.asm"}    # Source of the second stage of the bootloader, loads the kernel.
+: ${KERNEL_ASM_IN:="bootload2.asm"}    # Source of the first kernel version still written in assembly.
 
 # The color settings in bash escape codes for the output messages.
 # In the format: "Attribute:Foreground;Background", like this: 1;32;40 = bold;green;black
@@ -101,7 +101,7 @@ JORIX_SCRIPT="$0"
 # 0 - Nothing, use this for debugging.
 # 1 - Minimal, not so useful.
 # 2 - Multipass, use this in production code.
-: ${NASM_OPTIMIZE:=0}
+: ${NASM_OPTIMIZE:=2}
 
 # Disables the question
 : ${DISABLE_QUESTION:=0}
@@ -117,7 +117,7 @@ _outBoot2="${OUT_DIR_BOOT}/${BOOTLOADER_OUT}"
 _srcBoot2="${SRC_DIR_BOOT}/${BOOTLOADER_IN}"
 
 _outKernel1="${OUT_DIR_KERNEL}/${KERNEL_ASM_OUT}"
-_srcKernel1="${SRC_DIR_KERNEL}/${KERNEL_ASM_IN}"
+_srcKernel1="${SRC_DIR_BOOT}/${KERNEL_ASM_IN}"
 
 _outFloppy="${OUT_DIR_IMAGES}/${FLOPPY_IMAGE_OUT}"
 _outCdIso="${OUT_DIR_IMAGES}/${CD_ISO_IMAGE_OUT}"
@@ -232,6 +232,8 @@ assemble_file(){
     nasm -Xgnu -O${NASM_OPTIMIZE}v -w+orphan-labels -f bin -o ${2} "${1}" 2>&1 | extra_debug || exit 1
     fix_file_permissions "${2}"
     notify_success "successfully successfully assembled: ${2}"
+    extra_debug "Size of assembled file: $(stat -c "%s" "${2}")"
+    hexdump "${2}"
 }
 go_to_dir(){
    if (( $# != 1 )); then
@@ -332,7 +334,7 @@ assemble_file "$_srcBoot1" "$_outBoot1"
 assemble_file "$_srcBoot2" "$_outBoot2"
 
 # Go to the boot directory for assembling the source files of the kernel.
-go_to_dir "${SRC_DIR_KERNEL}"
+go_to_dir "${SRC_DIR_BOOT}"
 _safe_rm ${_outKernel1} 0         # Remove old kernel binary.
 
 # Assemble the kernel.
