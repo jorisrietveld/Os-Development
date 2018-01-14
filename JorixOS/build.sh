@@ -62,7 +62,7 @@ JORIX_SCRIPT="$0"
 : ${OUT_DIR_IMAGES:="${JORIX_DIR}/disk_images"} # The location of bootable disk images.
 : ${OUT_DIR_BOOT:="${SRC_DIR_BOOT}"}            # The location of the compiled bootloader.
 : ${OUT_DIR_KERNEL="${SRC_DIR_BOOT}"}         # The location of the compiled assembly kernel.
-: ${FLOPPY_MOUNT="${JORIX_DIR}/loopback_flp"}   # The temporary directory used to mount the floppy at.
+: ${FLOPPY_MOUNT="/tmp/loopback_flp"}   # The temporary directory used to mount the floppy at.
 
 # The base names of the source files.
 : ${BOOTSTRAP_BASE:="bootstrap"}                # The name of 512 byte bootstrap loader.
@@ -261,7 +261,7 @@ restart_script(){
     exec "$JORIX_SCRIPT"
 }
 clear
-mount_floppy
+
 
 toilet -t -f 3D-ASCII 'Jorix OS' | boxes -d stark2 -a hc -p h8 | toilet --gay -f term -t
 hr ".:" && print_center "Written By Joris Rietveld" && print_center "https://github.com/jorisrietveld" && hr

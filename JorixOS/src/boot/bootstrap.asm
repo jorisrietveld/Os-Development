@@ -372,8 +372,6 @@ datasector      dw 0x0000               ; The current datasector.
 cluster         dw 0x0000               ; The current cluster.
 
 ; Messages and file names.
-;imageName      db "STAGE2  BIN"        ; The name of the second stage bootloader located on the FAT disk.
-;imageName       db "BTLOAD1 BIN"         ; The name of the second stage bootloader located on the FAT disk.
 imageName       db BOOTLOADER1_FILENAME         ; The name of the second stage bootloader located on the FAT disk.
 msgLoading      db "Loading stage2...", NEWLN
 msgFailure      db "Error: press any key to destroy your computer.", NEWLN

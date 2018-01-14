@@ -10,7 +10,7 @@ bits 32
 
 jmp stage3
 
-%include "library/stdio.asm"
+%include "library/vga/tmode_printing.asm"
 %include "include/fancy_headers.asm"
 
 stage3:
@@ -22,9 +22,14 @@ stage3:
 
 showMenu:
     ; Print welcome message from 32 bit kernel.
-    call clearDisplay32         ; Clean up the screen.
+    call clearDisplay         ; Clean up the screen.
     mov ebx, msgFancyHeader         ; Get the pointer to the string as argument for the printString32 call.
-    call printString32          ; Print the sting to the screen.
+    call printString          ; Print the sting to the screen.
+    setColor VGA_WHITE, VGA_BLACK
+    call printString
+
+    setColor VGA_GREEN
+    call printString
 
     ; Perform my favorite way to spend time.
     cli
