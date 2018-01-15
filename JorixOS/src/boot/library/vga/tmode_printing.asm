@@ -137,6 +137,10 @@ setCharacterAttribute:
     mov [charAttribute], al
     ret
 
+getCharacterAttribute:
+    mov al, [charAttribute]
+    ret
+
 ;_________________________________________________________________________________________________________________________/ ϝ cursorLocation32
 ;   Description:
 ;   Move the cursor to an specific location on the screen.
@@ -145,6 +149,7 @@ setCharacterAttribute:
 ;   al      For setting the X position.
 ;   ah      For setting the Y position.
 %macro setColor 1-2
+    call getCharacterAttribute
     mov al, 0x%2%1
     call setCharacterAttribute
 %endmacro
@@ -168,7 +173,7 @@ setCharacterAttribute:
 ;   0x9         Maximum Scan Line                       ;   0x16       End Vertical Blanking
 ;   0xA         Cursor Start                            ;   0x17       CRT Mode Control
 ;   0xB         Cursor End                              ;   0x18       Line Compare
-;   0xC         Start Address High
+;   0xC        (b) & Start Address High
 ;________________________________________________________________________________________________________________________/ ℹ Character Attribute table.
 ; This is an table describing some character attributes for printing characters using VGA.
 ; Bits  Description

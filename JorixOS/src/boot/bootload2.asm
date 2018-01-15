@@ -23,12 +23,15 @@ stage3:
 showMenu:
     ; Print welcome message from 32 bit kernel.
     call clearDisplay         ; Clean up the screen.
+
+    setColor VGA_WHITE, VGA_RED
     mov ebx, msgFancyHeader         ; Get the pointer to the string as argument for the printString32 call.
     call printString          ; Print the sting to the screen.
-    setColor VGA_WHITE, VGA_BLACK
+
+    setColor VGA_BLACK, VGA_LIGHT_BROWN
     call printString
 
-    setColor VGA_GREEN
+    setColor VGA_WHITE, VGA_GREEN
     call printString
 
     ; Perform my favorite way to spend time.
