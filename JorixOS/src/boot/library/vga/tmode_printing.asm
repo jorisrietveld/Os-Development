@@ -14,14 +14,13 @@ bits 32
 %define     LINES           25          ; The amount of lines on the screen.
 %define     SCREEN_COLS     \
             COLUMNS * LINES             ; The amount of characters on the screen.
-%define     CHAR_ATTRIBUTE  0x1F        ; The default character attribute (white char on black background)
 %define     CHAR_BYTE_WIDTH 0x02        ; The amount of bytes for each character.
 
 %include 'library/vga/tmode_colors.asm'
 %include 'library/vga/cursor.asm'       ; Controls the vga cursor and tracks its position.
 %include 'include/ascii.asm'            ; Contains macros for all ASCII control characters.
 
-charAttribute db 0x1A
+charAttribute db 0x1F                   ; The attribute of the character to print. Default white on blue.
 
 ;_________________________________________________________________________________________________________________________/ ϝ printCharacter32
 ;   Description:
@@ -36,7 +35,7 @@ printCharacter:
 
     ; Get the current cursor position
     xor eax, eax                        ; Reset the
-    mov ecx, COLUMNS * 0x02             ; Set the column width to char width(2byte) * columns
+    mov ecx, COLUMNS * CHAR_BYTE_WIDTH  ; Set the column width to char width(2byte) * columns
     mov al, byte[_cursorPositionY]      ; Get the current y position of the cursor.
     mul ecx                             ; Multiply the y position by the
     push eax                            ; Save the calculated value on the stack.
@@ -118,7 +117,7 @@ clearDisplay:
     cld
     mov edi, VIDEO_MEMORY           ; Move the data index to the location of the video memory.
     mov cx, 2000                    ; Set the counter to 2000.
-    mov ah, CHAR_ATTRIBUTE          ; Set the character attributes to the default value.
+    mov ah, byte[charAttribute]           ; Set the character attributes to the default value.
     mov al, ' '                     ; Set the character to print to an space character to overwrite everything with.
     rep stosw                       ; Print 2000 space characters to the screen, effectively clearing it.
 
@@ -134,11 +133,11 @@ clearDisplay:
 ;   al      For setting the X position.
 ;   ah      For setting the Y position.
 setCharacterAttribute:
-    mov [charAttribute], al
+    mov byte[charAttribute], al
     ret
 
 getCharacterAttribute:
-    mov al, [charAttribute]
+    mov al, byte[charAttribute]
     ret
 
 ;_________________________________________________________________________________________________________________________/ ϝ cursorLocation32
