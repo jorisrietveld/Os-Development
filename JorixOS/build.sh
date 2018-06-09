@@ -54,7 +54,7 @@ JORIX_SCRIPT="$0"
 
 # Quick settings, you can also specify them from the shell like: QUICK_BR=1 ./build.sh this will override
 # the setting in the build script
-: ${QUICK_BR:=0}                                # If set it will rebuild everything and execute it.
+: ${QUICK:=0}                                # If set it will rebuild everything and execute it.
 
 # Some standard locations.
 : ${SRC_DIR_BOOT:="${JORIX_DIR}/src/boot"}      # The location of source code of the bootloader.
@@ -266,7 +266,7 @@ hr ".:" && print_center "Written By Joris Rietveld" && print_center "https://git
 print_center "Welcome to the Jorix OS build and run script." && hr
 #________________________________________________________________________________________________________________________/ Detect previous build
 
-if [ -f "${_outFloppy}" ] && (( $QUICK_BR == 0 )); then
+if [ -f "${_outFloppy}" ] && (( $QUICK == 0 )); then
     notify_question "There was an previous build detected do you want to start it? (y/N)"
     if read -r && echo "$REPLY" | grep -iq "^y" ; then
         qemu-system-i386 -net none -boot a -drive format=raw,file="${_outFloppy}",index=0,if=floppy
@@ -397,7 +397,7 @@ print_fancy pagga "Done building!"
 echo
 
 #________________________________________________________________________________________________________________________/ Cleanup
-if(( $DBG > 1 )) && (( $DISABLE_QUESTION == 0 )) && (( $QUICK_BR == 0 )); then
+if(( $DBG > 1 )) && (( $DISABLE_QUESTION == 0 )) && (( $QUICK == 0 )); then
     # Show generated output.
     notify_debug "The build script has generated the following files:"
     for i in "${GENERATED_BUILD_FILES[@]}"; do extra_debug "$i"; done
@@ -429,7 +429,7 @@ else
 fi
 
 # Wait for the user to decide if he want to run the build operation system.
-if (( $QUICK_BR == 1 )); then
+if (( $QUICK == 1 )); then
     start_os
     restart_script
 elif read -r && echo "$REPLY" | grep -iq "^y" ; then

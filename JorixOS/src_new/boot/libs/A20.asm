@@ -1,43 +1,28 @@
-;                                                                                       ,   ,           ( VERSION 0.0.2
-;                                                                                         $,  $,     ,   `̅̅̅̅̅̅( 0x002
-;                                                                                         "ss.$ss. .s'          `̅̅̅̅̅̅
-;   MMMMMMMM""M MMP"""""YMM MM"""""""`MM M""M M""MMMM""M                          ,     .ss$$$$$$$$$$s,
-;   MMMMMMMM  M M' .mmm. `M MM  mmmm,  M M  M M  `MM'  M                          $. s$$$$$$$$$$$$$$`$$Ss
-;   MMMMMMMM  M M  MMMMM  M M'        .M M  M MM.    .MM    .d8888b. .d8888b.     "$$$$$$$$$$$$$$$$$$o$$$       ,
-;   MMMMMMMM  M M  MMMMM  M MM  MMMb. "M M  M M  .mm.  M    88'  `88 Y8ooooo.    s$$$$$$$$$$$$$$$$$$$$$$$$s,  ,s
-;   M. `MMM' .M M. `MMM' .M MM  MMMMM  M M  M M  MMMM  M    88.  .88       88   s$$$$$$$$$"$$$$$$""""$$$$$$"$$$$$,
-;   MM.     .MM MMb     dMM MM  MMMMM  M M  M M  MMMM  M    `88888P' `88888P'   s$$$$$$$$$$s""$$$$ssssss"$$$$$$$$"
-;   MMMMMMMMMMM MMMMMMMMMMM MMMMMMMMMMMM MMMM MMMMMMMMMM                       s$$$$$$$$$$'         `"""ss"$"$s""
-;                                                                               s$$$$$$$$$$,              `"""""$  .s$$s
-;   ______[  Author ]______    ______[  Contact ]_______                        s$$$$$$$$$$$$s,...               `s$$'  `
-;      Joris Rietveld           jorisrietveld@gmail.com                       sss$$$$$$$$$$$$$$$$$$$$####s.     .$$"$.   , s-
-;                                                                             `""""$$$$$$$$$$$$$$$$$$$$#####$$$$$$"     $.$'
-;   _______________[ Website & Source  ]________________                           "$$$$$$$$$$$$$$$$$$$$$####s""     .$$$|
-;       https://github.com/jorisrietveld/Bootloaders                                 "$$$$$$$$$$$$$$$$$$$$$$$$##s    .$$" $
-;                                                                                     $$""$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"   `
-;   ___________________[ Licence ]______________________                             $$"  "$"$$$$$$$$$$$$$$$$$$$$S""""'
-;             General Public licence version 3                                  ,   ,"     '  $$$$$$$$$$$$$$$$####s
-;   ===============================================================================================================    ;
-;                                                                                                        Enable A20    ;                                                                                                                     ;
-;   Description:                                                                                         ̅̅̅̅̅̅̅̅̅̅    ;
-;   This file includes routines to enable the A20 gate, this allows for signals to be received/send on the A20 line.   ;
-;   This "Feature" was introduced because programmers found A bug in memory addressing, and decided to heavily rely    ;
-;   on it. They would call to line A20 which would cause the address to "Wrap around" to address 0x0000:0x0000. IMB    ;
-;   made the decision to solve this problem the correct way by fixing motherboard with some duct tape, zip ties and    ;
-;   thee spoon of black magic (Placing a Logic OR gate on line 20 so you can enable/disable legacy bugs). Because of   ;
-;   this we have to enable the A20 gate using the universally global standard method that differs on many systems.     ;
-;   The method that is mostly used is by using your standard CPU logic configuration port "The keyboard controller"    ;
-;   of course. If this method does not work on your machine use the alternate permanent fuse method by placing your    ;
-;   device in an 1200 watt microwave and hope for the best. (I AM NOT RESPONSIBLE FOR ANY DAMAGED EQUIPMENT ETC...)    ;
-;                                                                                                                      ;
-;   Created: 21-12-2017 00:16                                                                                          ;
-;                                                                                                                      ;
-%ifndef A20_ENABLE_DISABLE_32
-%define A20_ENABLE_DISABLE_32
+;_________________________________________________________________________________________________________________________/ Stage2.asm
+;   Author: Joris Rietveld  <jorisrietveld@gmail.com>
+;   Created: 21-12-2017 00:16
+;
+;   Description:
+;   This file includes routines to enable the A20 gate, this allows for signals to be received/send on the A20 line.
+;   This "Feature" was introduced because programmers found A bug in memory addressing, and decided to heavily rely
+;   on it. They would call to line A20 which would cause the address to "Wrap around" to address 0x0000:0x0000. IMB
+;   made the decision to solve this problem the correct way by fixing motherboard with some duct tape, zip ties and
+;   thee spoon of black magic (Placing a Logic OR gate on line 20 so you can enable/disable legacy bugs). Because of
+;   this we have to enable the A20 gate using the universally global standard method that differs on many systems.
+;   The method that is mostly used is by using your standard CPU logic configuration port "The keyboard controller"
+;   of course. If this method does not work on your machine use the alternate permanent fuse method by placing your
+;   device in an 1200 watt microwave and hope for the best. (I AM NOT RESPONSIBLE FOR ANY DAMAGED EQUIPMENT ETC...)
+;
+%ifndef __A20_ASM_INCLUDED__
+%define __A20_ASM_INCLUDED__
+bits 16
 
+%include 'libs/Common.asm'
 ;_________________________________________________________________________________________________________________________/ ϝ disable_A20
-; This function will enable the A20 line by flipping the A20 Gate using different methods. If it doesnt work on your
-; machine just un comment the jmp after the cli and set it to an different method.
+;   Description:
+;   This function will enable the A20 line by flipping the A20 Gate using different methods. If it doesnt work on your
+;   machine just un comment the jmp after the cli and set it to an different method.
+;
 enable_A20:
     pusha   ; Store all current CPU registers to the stack so we can restore them after the execution of this function.
     cli     ; Disable hardware interrupts that could triple fault the CPU.
@@ -85,7 +70,7 @@ enable_A20:
     ; Enable A20 with an BIOS interrupt call.
     .with_BIOS:
         mov ax, 0x2401      ; Set the enable A20 BIOS command.
-        int 0x15            ; Execute the BIOS interrupt that enables A20.
+        int BIOS_INT_MIC_SYS; Execute the BIOS interrupt that enables A20.
         jmp .return         ; A20 is enabled so its time to move on.
 
     ;_____________ A20 With system control __________________
@@ -101,8 +86,10 @@ enable_A20:
         popa                ; Restore the CPU register states.
         ret                 ; Return to the caller.
 ;_________________________________________________________________________________________________________________________/ ϝ disable_A20
-; This function will disable the A20 line by flipping the A20 Gate using different methods. If it doesnt work on your
-; machine just un comment the jmp after the cli and set it to an different method.
+;   Description:
+;   This function will disable the A20 line by flipping the A20 Gate using different methods. If it doesnt work on your
+;   machine just un comment the jmp after the cli and set it to an different method.
+;
 disable_A20:
     pusha                   ; Save the current CPU register state.
     cli                     ; Disable all hardware interrupts.
@@ -150,7 +137,7 @@ disable_A20:
     ; Enable A20 with an BIOS interrupt call.
     .with_BIOS:
         mov ax, 0x2400      ; Set the disable A20 BIOS command to ax.
-        int 0x15            ; Execute the BIOS interrupt that disables the A20 line.
+        int BIOS_INT_MIC_SYS; Execute the BIOS interrupt that disables the A20 line.
         jmp .return         ; A20 is disabled so its time to move on.
 
     ;_____________ A20 With system control __________________
@@ -185,7 +172,14 @@ A20_wait_output:
     jz A20_wait_output  ; If the output is not ready wait a bit longer.
     ret                 ; Output received return to the caller.
 
-;_____________________________________________________________________________________/ [1] Keyboard Controller Status register
+
+%endif ; __A20_ASM_INCLUDED__
+
+;
+;                               + ADDITIONAL INFORMATION REFERENCED IN THE CODE ABOVE.
+;
+;________________________________________________________________________________________________________________________/ ℹ Keyboard Controller Status register
+; This table shows the bits in the keyboard status register.
 ; Bit   Description
 ; 0     Output buffer status ready, 0 the buffer is empty and 1 the buffer is filled.
 ; 1     Input buffer full, 0 ready to be written and 1 full do not write to it.
@@ -195,5 +189,3 @@ A20_wait_output:
 ; 5     Auxiliary output buffer full
 ; 6     Timeout, 0 ok flag and 1 means a time out.
 ; 7     Parity error, 0 ok flag (no errors), 1 PARTY!(parity) error with the last bytes.
-
-%endif
