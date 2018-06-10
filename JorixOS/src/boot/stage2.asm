@@ -33,13 +33,15 @@ org 0x500    ; Offset to address 0
 bits 16     ; Assemble to 16 bit instructions (For 16 bit real-mode)
 jmp main    ; Jump to the main label.
 
-%include "./libs/stdio.asm"
-%include "./libs/gdt.asm"
-%include "./libs/A20.asm"
+%include "libs/stdio.asm"             ; TODO MIGRATE TO intel16 lib.
+%include "libs/gdt.inc"               ; TODO MIGRATE TO intel16 lib.
+%include "libs/a20.inc"
+%include "libs/common.inc"
+%include "libs/utils.inc"
 ;________________________________________________________________________________________________________________________/ § data section
-msg_gdt     db "Installed GDT...", 0x0D, 0x0A, 0   ; Create an message.
-msg_a20     db "Enabled the A20 line...", 0x0D, 0x0A, 0   ; Create an message.
-msg_switch  db "Switching the CPU into protected mode...", 0x0D, 0x0A, 0   ; Create an message.
+string msg_gdt, "Installed GDT..."
+string msg_a20, "Enabled the A20 line..."
+string msg_switch, "Switching the CPU into protected mode..."
 ;________________________________________________________________________________________________________________________/ § text section
 ;   Description:
 ;   The second stage of the bootloader, this stage executes after the bootstrap loader is finished preparing the system.
@@ -58,19 +60,34 @@ main:
 
     ; Define GDT
     call InstallGDT             ; Install the global descriptor table in the GDTR of the CPU.
-    mov si, msg_gdt
-    call printString16          ; Print status message to the user using macro defined in x16 stdio.asm
+    println_16 msg_gdt
 
     ; Enable A20
-    call enable_A20             ; Enable the A20 line by flipping the A20 gate.
-    mov si, msg_a20
-    call printString16          ; Print status message to the user using macro defined in x16 stdio.asm
+    EnableA20:
+        call CheckA20                       ; Check if the A20 gate is already enabled.
+        call enable_a20_bios                ; Try to enable the A20 gate with an BIOS interrupt.
+        call CheckA20                       ; Check if the BIOS interrupt worked.
+        call enable_a20_keyboard            ; No luck, try writing to the keyboard (PC/2) controller.
+        call CheckA20                       ; Check if writing to the keyboard controller worked.
+        call enable_a20_fast                ; Running out of options, try it the dangerous way that can blank the monitor.
+        call CheckA20                       ; Check if writing to the System Control Port worked...
+
+        ; In your case, switching the A20 gate might involve black magic.
+        .giveUp:
+            ;println_16 msg_fatal            ; Notify the user that the system is unable to boot.
+            jmp stop      ; Halt the processor until this moment.
+
+    CheckA20:
+        call check_a20                      ; Check if the A20 line is enabled.
+        cmp ax, 1                           ; does check_a20 return a one?
+        je enter_stage3                     ; The BIOS enabled it for us, tnx!
+        ret                                 ; That did'nt work return to the caller.
+    println_16 msg_a20
 
 ;_________________________________________________________________________________________________________________________/ § enter_stage3
 ;   This section will switch the CPU into protected mode and jump the the third stage of the bootloader.
 enter_stage3:
-    mov si, msg_switch
-    call printString16          ; Print status message to the user using macro defined in x16 stdio.asm
+    println_16 msg_switch
     cli                         ; Disable the interrupts because they will tipple fault the CPU in protected mode.
     mov eax, cr0                ; Get the value of the control register and copy it into eax.
     or eax, 1                   ; Alter the protected mode enable bit, set it to 1 so the CPU switches to it.

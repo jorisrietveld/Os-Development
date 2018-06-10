@@ -29,24 +29,24 @@
 ;                                                                                                                      ;
 ;   Created on: 17-12-2017 15:37                                                                                       ;
 ;                                                                                                                      ;
-bits 16     ; Configure the assembler to assemble into 16 bit instructions (For 16 bit real-mode)
+bits 16                                 ; Configure the assembler to assemble into 16 bit instructions (For 16 bit real-mode)
 
-jmp short startFirstStage     ; Jump to the initiation function that loads the second loader.
-nop                         ; Padding to align the bios parameter block.
+jmp short InitBootstrap                 ; Jump to the initiation function that loads the second loader.
+nop                                     ; Padding to align the bios parameter block.
 
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:
 ;   The BPB (BIOS Parameter Block) is the data structure that describes the the physical layout of the
 ;   device, in our case a floppy drive image.
 ;
-osName                  db "Jorix OS"   ; The name of the OS, Must be stored at 0x03 to 0x0A (with 0x7c00 prefix)
-bpbBytesPerSector  	    dw 512          ; The amount of bytes in a sector on the floppy disk.
-bpbSectorsPerCluster  	db 1            ; The cluster size, 1 sector because we need to be able to allocate 512 bytes.
-bpbReservedSectors  	dw 1            ; The amount of sectors that are not part of the FAT12 system (boot sector).
-bpbNumberOfFATs  	    db 2            ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
-bpbRootEntries  	    dw 224          ; The maximum amount of entries in the root directory.
-bpbTotalSectors  	    dw 2880         ; The amount of sectors that are present on the floppy disk.
-bpbMedia  	            db 0x0F0        ; Media description settings:
+osName              db "Jorix OS"       ; The name of the OS, Must be stored at 0x03 to 0x0A (with 0x7c00 prefix)
+SectorSize  	    dw 512              ; The amount of bytes in a sector on the floppy disk.
+ClusterSize  	    db 1                ; The cluster size, 1 sector because we need to be able to allocate 512 bytes.
+ReservedSectors  	dw 1                ; The amount of sectors that are not part of the FAT12 system (boot sector).
+NumberOfFATs  	    db 2                ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
+RootEntries  	    dw 224              ; The maximum amount of entries in the root directory.
+TotalSectors  	    dw 2880             ; The amount of sectors that are present on the floppy disk.
+Media  	            db 0x0F0            ; Media description settings:
                                         ; single sided, 9 sectors per FAT, 80 tracks, and not removable
                                         ; Explanation of the bits in the entry:
                                         ; Bit 0: Sides/Heads    = 0 if it is single sided, 1 if its double sided
@@ -54,28 +54,28 @@ bpbMedia  	            db 0x0F0        ; Media description settings:
                                         ; Bit 2: Density        = 0 if it has 80 tracks, 1 if it is 40 tracks.
                                         ; Bit 3: Type           = 0 for a fixed disk (HDD), 0 for a removable (FD,CD,USB)
                                         ; Bits 4 to 7 are unused, and always 1.
-bpbSectorsPerFAT  	    dw 9            ; The amount of sectors in each FAT entry.
-bpbSectorsPerTrack  	dw 18           ; The amount of sectors after each other on the floppy disk.
-bpbHeadsPerCylinder  	dw 2            ; The amount of reading heads above each other on the floppy disk.
-bpbHiddenSectors  	    dd 0            ; The amount of sectors between the physical start of the disk
+SectorsPerFAT  	    dw 9                ; The amount of sectors in each FAT entry.
+SectorsPerTrack  	dw 18               ; The amount of sectors after each other on the floppy disk.
+HeadsPerCylinder  	dw 2                ; The amount of reading heads above each other on the floppy disk.
+HiddenSectors  	    dd 0                ; The amount of sectors between the physical start of the disk
                                         ; and the start of the volume.
-bpbTotalSectorsBig      dd 0            ; The total amount of lage sectors.
-bsDriveNumber  	        db 0            ; 0 because this is the standard for floppy disks.
-bsExtBootSignature  	db 41           ; The boot signature of: MS/PC-DOS Version 4.0
-bsSerialNumber 	        dd 00000000h    ; This gets overwritten every time the image get written.
-bsVolumeLabel  	        db "JORIX OS   "; The label of the volume.
-bsFileSystem  	        db "FAT12   "   ; The type of file system.
+TotalSectorsBig     dd 0                ; The total amount of lage sectors.
+DriveNumber  	    db 0                ; 0 because this is the standard for floppy disks.
+bsExtBootSignature  db 41               ; The boot signature of: MS/PC-DOS Version 4.0
+bsSerialNumber 	    dd 00000000h        ; This gets overwritten every time the image get written.
+bsVolumeLabel  	    db "JORIX OS   "    ; The label of the volume.
+bsFileSystem  	    db "FAT12   "       ; The type of file system.
 
-
+%include './libs/common.inc'
 ;________________________________________________________________________________________________________________________/ § main
 ;   Description:
 ;   This is the entry point of the stage bootloader. It will initiate the memory segments and stack, Then it executes
 ;   the routines that prepare the system for the booting the kernel.
 ;
-startFirstStage:
+InitBootstrap:
     ; Set the starting point of the code
-    cli             ; Disable all hardware interrupts.
-    mov ax, 0x7c0   ; Define the address of where the code should start.
+    cli             ; Disable all hardware interrupt before moving segments.
+    mov ax, 0x7c0   ; Define the address where the BIOS will load us.
     mov ds, ax      ; Adjust the data segment to the new location.
     mov es, ax      ; Adjust the extra segment to the new location.
     mov fs, ax      ; Adjust the  segment to the new location.
@@ -100,20 +100,20 @@ loadRootDirectory:
     xor cx, cx                          ; Zero the counter register.
     xor dx, dx                          ; Zero the data register.
     mov ax, 0x0020                      ; Move the number 32 (the size of an FAT directory entry) to ax.
-    mul word [bpbRootEntries]           ; Then multiply the size of each entry by the number of root entries.
-    div word [bpbBytesPerSector]        ; Finally divide the number of root entries by the bytes each sector has to get
+    mul word [RootEntries]           ; Then multiply the size of each entry by the number of root entries.
+    div word [SectorSize]        ; Finally divide the number of root entries by the bytes each sector has to get
                                         ; the amount of bytes the root entry uses.
     xchg ax, cx                         ; exchange registers, so that cx contains the answer of the calculation and
                                         ; ax 0 for the next.
 
     ; Calculate the location of the root directory. (It starts after: boot sector, extra reserved sectors, the 2 FAT's)
-    mov al, byte[bpbNumberOfFATs]       ; First get the number of FAT's
-    mul word[bpbSectorsPerFAT]          ; Then multiply that with the amount of sectors each FAT has.
-    add ax, word[bpbReservedSectors]    ; Then add the reserved sectors (Like the bootloader) to get the amount of
+    mov al, byte[NumberOfFATs]       ; First get the number of FAT's
+    mul word[SectorsPerFAT]          ; Then multiply that with the amount of sectors each FAT has.
+    add ax, word[ReservedSectors]    ; Then add the reserved sectors (Like the bootloader) to get the amount of
                                         ; sectors before the root directory.
-    mov word[datasector], ax            ; Set the starting point of the data sector to ax (Start of our code) to pass to
+    mov word[DataSector], ax            ; Set the starting point of the data sector to ax (Start of our code) to pass to
                                         ; the read sectors function.
-    add word[datasector], cx            ; Finally add the starting address to the total size to get the total amount of
+    add word[DataSector], cx            ; Finally add the starting address to the total size to get the total amount of
                                         ; segments to read.
 
     ; Read the root directory into memory at 7c00:0200 using AX (starting point) and CX (Amount of sectors to read).
@@ -122,7 +122,7 @@ loadRootDirectory:
     call readSectors                    ; Call the function that actually reads sectors into memory.
 
     ; Find the location of the second stage of the bootloader located some where in the root directory.
-    mov cx, word[bpbRootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root
+    mov cx, word[RootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root
                                         ; directory. This counter will be decremented until the correct entry is found
                                         ; or if we reach 0, which means that the file doesn't exist.
     mov di, 0x0200                      ; Set the pointer for comparing the each character in the second stage file name
@@ -167,12 +167,12 @@ loadFAT:
 
     ; Then compute the size of the FAT and store it in CX
     xor ax, ax                      ; Zero the ax register.
-    mov al, byte[bpbNumberOfFATs]   ; Get the number of file allocation tables on the device.
-    mul word[bpbSectorsPerFAT]      ; Then multiply them with the amount of sectors of each fat.
+    mov al, byte[NumberOfFATs]   ; Get the number of file allocation tables on the device.
+    mul word[SectorsPerFAT]      ; Then multiply them with the amount of sectors of each fat.
     mov cx, ax                      ; Save the answer to cx
 
     ; And calculate the location of the FAT.
-    mov ax, word[bpbReservedSectors]; Adjust the location by adding the boot sector.
+    mov ax, word[ReservedSectors]; Adjust the location by adding the boot sector.
     ; Read the FAT into memory at address 7c00:0200
     mov bx, 0x0200                  ; Set the location to write the fat to.
     call readSectors                ; Copy the file allocation table above the boot code at address 7c00:0200
@@ -194,7 +194,7 @@ loadImage:
     pop bx                      ; Get the bx from stack that contains the starting address of the image.
     call convertChsToLba        ; Convert the cluster number to LBA (Logical Block Addressing).
     mov cx, cx                  ; Zero the counter register.
-    mov cl, byte[bpbSectorsPerCluster]  ; Set the amount of sectors the cluster has.
+    mov cl, byte[ClusterSize]  ; Set the amount of sectors the cluster has.
     call readSectors            ; Load the sectors to bx using ax as starting address, cl as the amount to read.
     push bx                     ; Save the value of BX
 
@@ -239,15 +239,14 @@ executeNextStage:
 
 ;________________________________________________________________________________________________________________________/ § failure
 ;   Description:
-;   The name is pretty explanatory, it is a description of me, my life, the architects of x86, Alan Tuning...
-;   (｡◕‿◕｡)⊃━☆ﾟ.*･｡ﾟ Happy debugging ԅ(≖‿≖ԅ)
+;   The name is pretty explanatory: (｡◕‿◕｡)⊃━☆ﾟ.*･｡ﾟ Happy debugging ԅ(≖‿≖ԅ)
 ;
 failure:
-    mov si, msgFailure      ; todo: remove this with my println macro
-    call printString        ;
-    xor ah, ah              ; Set 0 to the ax high byte as function.
-    int 0x16                ; Execute an BIOS interrupt that:
-    int 0x19                ; Reset the system.
+    mov si, msgFailure                  ; todo: remove this with my println macro
+    call printString                    ;
+    xor ah, ah                          ; Set 0 to the ax high byte as function.
+    int BIOS_INTERRUPT_KEYBOARD         ; Execute an BIOS interrupt that:
+    int BIOS_INTERRUPT_W_REBOOT         ; Reset the system.
 
 ;________________________________________________________________________________________________________________________/ ϝ printString
 ;   Description:
@@ -265,17 +264,17 @@ printString:
 
     .print_character:
         ; Load Data segment Byte
-        lodsb       ; Load byte from string addressed by DS:SI to the ax low register. The Direction Flag is clear so SI
-                    ; (source index) is incremented so we can get the next character if we need to print more characters.
-        or al, al   ; Do fast logical OR on the low byte of the accumulator low byte (containing an char of the string)
-        jz .return  ; Done printing, the if the loaded byte contains an zero the or will set the zero flag.
+        lodsb                           ; Load byte from string addressed by DS:SI to the ax low register. The Direction Flag is clear so SI
+                                        ; (source index) is incremented so we can get the next character if we need to print more characters.
+        or al, al                       ; Do fast logical OR on the low byte of the accumulator low byte (containing an char of the string)
+        jz .return                      ; Done printing, the if the loaded byte contains an zero the or will set the zero flag.
 
-        mov ah, 0x0e; Set the ASCII SO (shift out) character to the high byte of the accumulator.
-        int 0x10    ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the
-                    ; accumulator register contains an ASCII SO character this will determine the video function to
-                    ; perform. The low byte contains the argument of that function (a character), so combined it will
-                    ; shift out(ah) the character stored in al.
-        jmp .print_character ; Finished printing this character move to the next.
+        mov ah, ASCII_CRTL_SO           ; Set the ASCII SO (shift out) character to the high byte of the accumulator.
+        int BIOS_INTERRUPT_VIDEO        ; Fire an BIOS interrupt 16 (video services) that uses ax as its input, the high part of the
+                                        ; accumulator register contains an ASCII SO character this will determine the video function to
+                                        ; perform. The low byte contains the argument of that function (a character), so combined it will
+                                        ; shift out(ah) the character stored in al.
+        jmp .print_character            ; Finished printing this character move to the next.
 
     .return:
         popa    ; Restore the state of the CPU registers to before executing this function.
@@ -300,22 +299,22 @@ readSectors:
         mov ch, BYTE [absoluteTrack]    ; track
         mov cl, BYTE [absoluteSector]   ; sector
         mov dh, BYTE [absoluteHead]     ; head
-        mov dl, BYTE [bsDriveNumber]    ; drive
-        int 0x13                        ; invoke BIOS
+        mov dl, BYTE [DriveNumber]    ; drive
+        int BIOS_INTERRUPT_DISK         ; invoke BIOS
         jnc .readedSuccessfull          ; test for read error
         xor ax, ax                      ; BIOS reset disk
-        int 0x13                        ; invoke BIOS
+        int BIOS_INTERRUPT_DISK         ; invoke BIOS
         dec di                          ; decrement error counter
         pop cx                          ; Restore the state of the cx register.
         pop bx                          ; Restore the state of the bx register.
         pop ax                          ; Restore the state of the ax register.
         jnz .readAnSector               ; attempt to read again
-        int 0x18                        ; Reset and try again.
+        int BIOS_INTERRUPT_REBOOT       ; Reset and try again.
     .readedSuccessfull:
         pop cx                          ; Restore the state of the cx register.
         pop bx                          ; Restore the state of the bx register.
         pop ax                          ; Restore the state of the ax register.
-        add bx, word[bpbBytesPerSector] ; Queue the next buffer
+        add bx, word[SectorSize] ; Queue the next buffer
         inc ax                          ; Increment the read counter
         loop .main                      ; Move ahead to the next sector to read.
         ret                             ; return
@@ -327,20 +326,20 @@ readSectors:
 convertChsToLba:
     sub ax, 0x0002                      ; The zero base cluster number
     xor cx, cx                          ; Zero the counter register.
-    mov cl, byte[bpbSectorsPerCluster]  ; Convert the byte to an word.
+    mov cl, byte[ClusterSize]  ; Convert the byte to an word.
     mul cx                              ; Multiply cx with 2
-    add ax, word[datasector]            ; Set the base data sector.
+    add ax, word[DataSector]            ; Set the base data sector.
     ret                                 ; return to the caller.
 ;________________________________________________________________________________________________________________________/ ϝ convertLbaToChs
 ;   Description:
 ;
 convertLbaToChs:
     xor dx, dx
-    div word[bpbSectorsPerTrack]
+    div word[SectorsPerTrack]
     inc dl
     mov byte[absoluteSector],dl
     xor dx, dx
-    div word[bpbHeadsPerCylinder]
+    div word[HeadsPerCylinder]
     mov byte[absoluteHead],dl
     mov byte[absoluteTrack],al
     ret
@@ -350,7 +349,7 @@ convertLbaToChs:
 absoluteSector  db 0x00
 absoluteHead    db 0x00
 absoluteTrack   db 0x00
-datasector      dw 0x0000
+DataSector      dw 0x0000
 cluster         dw 0x0000
 imageName       db "STAGE2  BIN"
 msgLoading      db "Loading stage2...", 0

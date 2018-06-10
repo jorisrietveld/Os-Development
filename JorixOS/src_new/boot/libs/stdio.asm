@@ -9,8 +9,6 @@
 %ifndef __STDIO_ASM_INCLUDED__
 %define __STDIO_ASM_INCLUDED__
 
-%include 'libs/Common.asm'
-
 bits 16
 
 ;_________________________________________________________________________________________________________________________/ ϝ put_string_16

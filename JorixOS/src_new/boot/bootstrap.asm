@@ -40,13 +40,13 @@ nop                         ; Padding to align the bios parameter block.
 ;   device, in our case a floppy drive image.
 ;
 osName                  db "Jorix OS"   ; The name of the OS, Must be stored at 0x03 to 0x0A (with 0x7c00 prefix)
-bpbBytesPerSector  	    dw 512          ; The amount of bytes in a sector on the floppy disk.
-bpbSectorsPerCluster  	db 1            ; The cluster size, 1 sector because we need to be able to allocate 512 bytes.
-bpbReservedSectors  	dw 1            ; The amount of sectors that are not part of the FAT12 system (boot sector).
-bpbNumberOfFATs  	    db 2            ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
-bpbRootEntries  	    dw 224          ; The maximum amount of entries in the root directory.
-bpbTotalSectors  	    dw 2880         ; The amount of sectors that are present on the floppy disk.
-bpbMedia  	            db 0x0F0        ; Media description settings:
+BPBSectorSize  	    dw 512          ; The amount of bytes in a sector on the floppy disk.
+ClusterSize  	db 1            ; The cluster size, 1 sector because we need to be able to allocate 512 bytes.
+ReservedSectors  	dw 1            ; The amount of sectors that are not part of the FAT12 system (boot sector).
+NumberOfFATs  	    db 2            ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
+RootEntries  	    dw 224          ; The maximum amount of entries in the root directory.
+TotalSectors  	    dw 2880         ; The amount of sectors that are present on the floppy disk.
+Media  	            db 0x0F0        ; Media description settings:
                                         ; single sided, 9 sectors per FAT, 80 tracks, and not removable
                                         ; Explanation of the bits in the entry:
                                         ; Bit 0: Sides/Heads    = 0 if it is single sided, 1 if its double sided
@@ -54,14 +54,14 @@ bpbMedia  	            db 0x0F0        ; Media description settings:
                                         ; Bit 2: Density        = 0 if it has 80 tracks, 1 if it is 40 tracks.
                                         ; Bit 3: Type           = 0 for a fixed disk (HDD), 0 for a removable (FD,CD,USB)
                                         ; Bits 4 to 7 are unused, and always 1.
-bpbSectorsPerFAT  	    dw 9            ; The amount of sectors in each FAT entry.
-bpbSectorsPerTrack  	dw 18           ; The amount of sectors after each other on the floppy disk.
-bpbHeadsPerCylinder  	dw 2            ; The amount of reading heads above each other on the floppy disk.
-bpbHiddenSectors  	    dd 0            ; The amount of sectors between the physical start of the disk
+FATSize  	    dw 9            ; The amount of sectors in each FAT entry.
+SectorsPerTrack  	dw 18           ; The amount of sectors after each other on the floppy disk.
+HeadsPerCylinder  	dw 2            ; The amount of reading heads above each other on the floppy disk.
+HiddenSectors  	    dd 0            ; The amount of sectors between the physical start of the disk
                                         ; and the start of the volume.
-bpbTotalSectorsBig      dd 0            ; The total amount of lage sectors.
-bsDriveNumber  	        db 0            ; 0 because this is the standard for floppy disks.
-bsExtBootSignature  	db 41           ; The boot signature of: MS/PC-DOS Version 4.0
+TotalSectorsBig      dd 0            ; The total amount of lage sectors.
+DriveNumber  	        db 0            ; 0 because this is the standard for floppy disks.
+ExtBootSignature  	db 41           ; The boot signature of: MS/PC-DOS Version 4.0
 bsSerialNumber 	        dd 0x00000000   ; This gets overwritten every time the image get written.
 bsVolumeLabel  	        db "JORIX OS   "; The label of the volume.
 bsFileSystem  	        db "FAT12   "   ; The type of file system.
@@ -105,20 +105,20 @@ loadRootDirectory:
     xor cx, cx                          ; Zero the counter register.
     xor dx, dx                          ; Zero the data register.
     mov ax, 0x0020                      ; Move the number 32 (the size of an FAT directory entry) to ax.
-    mul word [bpbRootEntries]           ; Then multiply the size of each entry by the number of root entries.
-    div word [bpbBytesPerSector]        ; Finally divide the number of root entries by the bytes each sector has to get
+    mul word [RootEntries]           ; Then multiply the size of each entry by the number of root entries.
+    div word [SectorSize]        ; Finally divide the number of root entries by the bytes each sector has to get
                                         ; the amount of bytes the root entry uses.
     xchg ax, cx                         ; exchange registers, so that cx contains the answer of the calculation and
                                         ; ax 0 for the next.
 
     ; Calculate the location of the root directory. (It starts after: boot sector, extra reserved sectors, the 2 FAT's)
-    mov al, byte[bpbNumberOfFATs]       ; First get the number of FAT's
-    mul word[bpbSectorsPerFAT]          ; Then multiply that with the amount of sectors each FAT has.
-    add ax, word[bpbReservedSectors]    ; Then add the reserved sectors (Like the bootloader) to get the amount of
+    mov al, byte[NumberOfFATs]       ; First get the number of FAT's
+    mul word[SectorsPerFAT]          ; Then multiply that with the amount of sectors each FAT has.
+    add ax, word[ReservedSectors]    ; Then add the reserved sectors (Like the bootloader) to get the amount of
                                         ; sectors before the root directory.
-    mov word[datasector], ax            ; Set the starting point of the data sector to ax (Start of our code) to pass to
+    mov word[DataSector], ax            ; Set the starting point of the data sector to ax (Start of our code) to pass to
                                         ; the read sectors function.
-    add word[datasector], cx            ; Finally add the starting address to the total size to get the total amount of
+    add word[DataSector], cx            ; Finally add the starting address to the total size to get the total amount of
                                         ; segments to read.
 
     ; Read the root directory into memory at 7c00:0200 using AX (starting point) and CX (Amount of sectors to read).
@@ -127,7 +127,7 @@ loadRootDirectory:
     call readSectors                    ; Call the function that actually reads sectors into memory.
 
     ; Find the location of the second stage of the bootloader located some where in the root directory.
-    mov cx, word[bpbRootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root
+    mov cx, word[RootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root
                                         ; directory. This counter will be decremented until the correct entry is found
                                         ; or if we reach 0, which means that the file doesn't exist.
     mov di, FAT_OFFSET                  ; Set the pointer for comparing the each character in the second stage file name
@@ -170,12 +170,12 @@ loadFAT:
 
     ; Then compute the size of the FAT and store it in CX
     xor ax, ax                      ; Zero the ax register.
-    mov al, byte[bpbNumberOfFATs]   ; Get the number of file allocation tables on the device.
-    mul word[bpbSectorsPerFAT]      ; Then multiply them with the amount of sectors of each fat.
+    mov al, byte[NumberOfFATs]   ; Get the number of file allocation tables on the device.
+    mul word[SectorsPerFAT]      ; Then multiply them with the amount of sectors of each fat.
     mov cx, ax                      ; Save the answer to cx
 
     ; And calculate the location of the FAT.
-    mov ax, word[bpbReservedSectors]; Adjust the location by adding the boot sector.
+    mov ax, word[ReservedSectors]; Adjust the location by adding the boot sector.
 
     ; Read the FAT into memory at address 7c00:0200
     mov bx, FAT_OFFSET                  ; Set the location to write the fat to.
@@ -196,7 +196,7 @@ loadImage:
     pop bx                              ; Get the bx from stack that contains the starting address of the image.
     call convertChsToLba                ; Convert the cluster number to LBA (Logical Block Addressing).
     mov cx, cx                          ; Zero the counter register.
-    mov cl, byte[bpbSectorsPerCluster]  ; Set the amount of sectors the cluster has.
+    mov cl, byte[ClusterSize]  ; Set the amount of sectors the cluster has.
     call readSectors                    ; Load the sectors to bx using ax as starting address, cl as the amount to read.
     push bx                             ; Save the value of BX
 
@@ -300,7 +300,7 @@ readSectors:
         mov ch, BYTE [absoluteTrack]    ; track
         mov cl, BYTE [absoluteSector]   ; sector
         mov dh, BYTE [absoluteHead]     ; head
-        mov dl, BYTE [bsDriveNumber]    ; drive
+        mov dl, BYTE [DriveNumber]    ; drive
         int BIOS_INT_DISK               ; invoke BIOS
         jnc .readedSuccessfull          ; test for read error
         xor ax, ax                      ; BIOS reset disk
@@ -316,7 +316,7 @@ readSectors:
         pop cx                          ; Restore the state of the cx register.
         pop bx                          ; Restore the state of the bx register.
         pop ax                          ; Restore the state of the ax register.
-        add bx, word[bpbBytesPerSector] ; Queue the next buffer
+        add bx, word[SectorSize] ; Queue the next buffer
         inc ax                          ; Increment the read counter
         loop .main                      ; Move ahead to the next sector to read.
         ret                             ; return
@@ -332,9 +332,9 @@ readSectors:
 convertChsToLba:
     sub ax, 0x0002                      ; Cluster number - 2
     xor cx, cx                          ; Clear the counter
-    mov cl, byte[bpbSectorsPerCluster]  ; Get the amount of sectors in a cluster.
+    mov cl, byte[ClusterSize]  ; Get the amount of sectors in a cluster.
     mul cx                              ; Multiply the cluster number minus 2 by the amount of sectors.
-    add ax, word[datasector]            ; And add the data sector offset to it.
+    add ax, word[DataSector]            ; And add the data sector offset to it.
     ret
 
 ;________________________________________________________________________________________________________________________/ ϝ convertLbaToChs
@@ -350,11 +350,11 @@ convertChsToLba:
 ;
 convertLbaToChs:BIOS_INTERRUPT_DISK
     xor dx, dx                          ; Clear dx
-    div word[bpbSectorsPerTrack]        ; Divide LBA by sectorPerTrack (the remainder is stored in dx).
+    div word[SectorsPerTrack]        ; Divide LBA by sectorPerTrack (the remainder is stored in dx).
     inc dl                              ; Add 1 to the modulus of LBA
     mov byte[absoluteSector],dl         ; Save the calculated absolute sector address
     xor dx, dx                          ; Clear the value.
-    div word[bpbHeadsPerCylinder]       ; Divide LBA by the number number of heads. (dx has the remainder)
+    div word[HeadsPerCylinder]       ; Divide LBA by the number number of heads. (dx has the remainder)
     mov byte[absoluteHead],dl           ; Store the absolute head.
     mov byte[absoluteTrack],al          ; Store the absolute track.
     ret
@@ -367,7 +367,7 @@ absoluteHead    db 0x00                 ; The current head of the floppy drive.
 absoluteTrack   db 0x00                 ; The current track its on the floppy drives disk.
 
 ; LBA (Logic Block Addressing) variables, they store the current locations using LBA.
-datasector      dw 0x0000               ; The current datasector.
+DataSector      dw 0x0000               ; The current DataSector.
 cluster         dw 0x0000               ; The current cluster.
 
 ; Messages and file names.
