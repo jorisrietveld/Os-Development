@@ -19,8 +19,8 @@
 
 ## About
 This project contains several components such as an bootloader, kernel and additional tools for building/running
-the operating system. The bootloader is written in the NASM assembly flavor and the kernel is written in C and C++.
-Some of the additional tools for build/run automation are written in Bash, Makefile and Python.
+the operating system. The bootloader is written in the NASM assembly and the kernel will be written in C and C++.
+Some of the additional tools for build/run automation are going to written in Bash, Makefile and Python.
 
 ### Authors
 
@@ -32,9 +32,8 @@ Some of the additional tools for build/run automation are written in Bash, Makef
 Since its my fist real attempt to create an simple operating system, I have to learn a lot about almost every part
 needed in OS development. I enjoy to lean and found that writing tutorials and documentation really helps in my learning
 process. I think this is because explaining how, why and what your doing, uncovers if you really understand what and
-more importantly why you are doing something. I am also constantly updating comments and documentation because I
-learned some new stuff and see that I am describing incorrect behaviour or motivations.
-
+more importantly why you are doing something.
+<!--
 Your free to take a look at my tutorials about NASM, OS development and Environment setup (I will probability add more),
 but keep in mind that I am still learning and its very possible to encounter errors and I would appreciate any kind of
 [feedback](https://github.com/jorisrietveld/Bootloaders/issues/new).
@@ -48,7 +47,7 @@ but keep in mind that I am still learning and its very possible to encounter err
     - [Bootloader]()
     - [Kernel]()
     - [Scripts]()
-
+-->
 ### Tutorials/Documentation I used
 _Resource types :link: websites, :clapper: Youtube videos :blue_book: PDF(downloads) and :book: text books_
 - NASM/assembly
