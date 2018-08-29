@@ -104,7 +104,7 @@ disable_A20:
         mov al, 0xD0        ; Set the read output port command of the keyboard controller.
         out 0x64, al        ; Read from the output port.
         call A20_wait_output; Wait until the keyboard controller has written data to the output port.
-
+w
         in al, 0x60         ; Get the output of the data port.
         push eax            ; And save it on the stack.
         call A20_wait_input ; Wait until the keyboard controller signals that the data is ready.
