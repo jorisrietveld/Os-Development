@@ -15,3 +15,13 @@
 ; The two bytes at the end of the sector are either: 0xAA55 or 0x55AA depending if the system is big or little endian.
 ; It doesnt matter because the number converts to the exact same binary pattern: 1010 1010 0101 0101.
 ;
+bits 16     ; Configure the assembler to assemble into 16 bit instructions (For 16 bit real-mode)
+
+startFirstStage:
+    ; Set the starting point of the code
+    cli             ; Disable all hardware interrupts.
+    mov ax, 0x7c0   ; Define the address of where the code should start.
+    mov ds, ax      ; Adjust the data segment to the new location.
+    mov es, ax      ; Adjust the extra segment to the new location.
+    mov fs, ax      ; Adjust the  segment to the new location.
+    mov gs, ax      ; Adjust the  segment to the new location.

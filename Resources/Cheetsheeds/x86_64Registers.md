@@ -56,7 +56,7 @@ is build up from 2 registers each 1 byte long. They are the registers with the H
 
 ## Data registers 
 
-#### Accumilator Registers
+#### Accumulator Registers
 _Used for I/O port access, arithmetic and interrupt calls_
 
 |**Register**|**Name**                        | **Description**                                       |
@@ -182,4 +182,7 @@ data structure_
 |-----------:|-------:|-------------------------------:|
 |   SS      | 16     | Stack Segment Register          |
 |   ESS      | 32    | Extended Stack Segment Register |
+
+
+
 
