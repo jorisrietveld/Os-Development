@@ -15,7 +15,9 @@
 ;
 %ifndef __A20_ASM_INCLUDED__
 %define __A20_ASM_INCLUDED__
+bits 16
 
+%include 'libs/Common.asm'
 ;_________________________________________________________________________________________________________________________/ ϝ disable_A20
 ;   Description:
 ;   This function will enable the A20 line by flipping the A20 Gate using different methods. If it doesnt work on your
@@ -68,7 +70,7 @@ enable_A20:
     ; Enable A20 with an BIOS interrupt call.
     .with_BIOS:
         mov ax, 0x2401      ; Set the enable A20 BIOS command.
-        int 0x15            ; Execute the BIOS interrupt that enables A20.
+        int BIOS_INT_MIC_SYS; Execute the BIOS interrupt that enables A20.
         jmp .return         ; A20 is enabled so its time to move on.
 
     ;_____________ A20 With system control __________________
@@ -135,7 +137,7 @@ disable_A20:
     ; Enable A20 with an BIOS interrupt call.
     .with_BIOS:
         mov ax, 0x2400      ; Set the disable A20 BIOS command to ax.
-        int 0x15            ; Execute the BIOS interrupt that disables the A20 line.
+        int BIOS_INT_MIC_SYS; Execute the BIOS interrupt that disables the A20 line.
         jmp .return         ; A20 is disabled so its time to move on.
 
     ;_____________ A20 With system control __________________
@@ -169,6 +171,7 @@ A20_wait_output:
     test al, 0x01       ; Test if bit 1 is set in the status register. [1] below for an detailed explanation.
     jz A20_wait_output  ; If the output is not ready wait a bit longer.
     ret                 ; Output received return to the caller.
+
 
 %endif ; __A20_ASM_INCLUDED__
 

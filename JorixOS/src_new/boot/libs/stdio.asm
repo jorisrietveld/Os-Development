@@ -8,12 +8,26 @@
 ;
 %ifndef __STDIO_ASM_INCLUDED__
 %define __STDIO_ASM_INCLUDED__
+
 bits 16
 
-%define DISPLAY_BIOS_INT    0x10    ; Bios interrupt for low level display services.
+;_________________________________________________________________________________________________________________________/ ϝ put_string_16
+;   Description:
+;   This function prints a string to the screen using BIOS interrupts.
+printString16:
+    pusha                               ; save registers
 
-%define ASCII_SO_CHAR       0x0E    ; Ascii new line feed character.
-%define ASCII_LF_CHAR       0x0A    ; Ascii new line feed character.
+    .print_char:
+		lodsb                           ; load next byte from string from SI to AL
+		or	al, al                      ; Does AL=0?
+		jz	.return		                ; Yep, null terminator found-bail out
+		mov	ah, ASCII_CRTL_SO           ; Nope-Print the character
+		int	BIOS_INT_VIDEO              ; invoke BIOS
+		jmp	.print_char	                ; Repeat until null terminator found
+
+    .return:
+		popa                            ; restore registers
+		ret
 
 ;_________________________________________________________________________________________________________________________/ § 32 bit IO
 ;   This section contains standard IO functions in 32 bits that are used when the CPU switched to Protected Mode.
@@ -34,49 +48,49 @@ _cursorPositionY db 0
 ;   Function Arguments:
 ;   bl      The character to print on the screen.
 printCharacter32:
-    pusha                           ; Save the current CPU register state.
-    mov edi, VIDEO_MEMORY           ; Initiate the data input at the start of the video memory.
+    pusha                               ; Save the current CPU register state.
+    mov edi, VIDEO_MEMORY               ; Initiate the data input at the start of the video memory.
 
     ; Get the current cursor position
-    xor eax, eax                    ; Reset the
-    mov ecx, COLUMNS * 0x02         ; Set the column width to char width(2byte) * columns
-    mov al, byte[_cursorPositionY]  ; Get the current y position of the cursor.
-    mul ecx                         ; Multiply the y position by the
-    push eax                        ; Save the calculated value on the stack.
-    mov al, byte[_cursorPositionX]  ; Get the x position of the cursor.
-    mov cl, 0x02                    ; Get the width of an char (2 bytes)
-    mul cl                          ; Multiply the cursor x position by the width.
-    pop ecx                         ; Push the calculated value on to the stack.
-    add eax, ecx                    ; Add the character position to calculate the offset.
-    xor ecx, ecx                    ; Clear the counter register.
-    add edi, eax                    ; Add the offset to the base.
+    xor eax, eax                        ; Reset the
+    mov ecx, COLUMNS * 0x02             ; Set the column width to char width(2byte) * columns
+    mov al, byte[_cursorPositionY]      ; Get the current y position of the cursor.
+    mul ecx                             ; Multiply the y position by the
+    push eax                            ; Save the calculated value on the stack.
+    mov al, byte[_cursorPositionX]      ; Get the x position of the cursor.
+    mov cl, 0x02                        ; Get the width of an char (2 bytes)
+    mul cl                              ; Multiply the cursor x position by the width.
+    pop ecx                             ; Push the calculated value on to the stack.
+    add eax, ecx                        ; Add the character position to calculate the offset.
+    xor ecx, ecx                        ; Clear the counter register.
+    add edi, eax                        ; Add the offset to the base.
 
     ; Check for new line cha_cursorPositionY characters.
-    cmp bl, ASCII_LF_CHAR           ; Do we need to print an newline character?
-    je .row                         ; Yes, then jump to the newline routine.
+    cmp bl, ASCII_CRTL_LF               ; Do we need to print an newline character?
+    je .row                             ; Yes, then jump to the newline routine.
 
     ; Print the character
-    mov dl, bl                      ; Set the function input to the data low register.
-    mov dh, CHAR_ATTRIBUTE          ; Set the character attribute to data high.
-    mov word[edi], dx               ; Write the character with attributes to the video memory.
+    mov dl, bl                          ; Set the function input to the data low register.
+    mov dh, CHAR_ATTRIBUTE              ; Set the character attribute to data high.
+    mov word[edi], dx                   ; Write the character with attributes to the video memory.
 
     ; Update the position
-    inc byte[_cursorPositionX]      ; Increment the position x tracker.
+    inc byte[_cursorPositionX]          ; Increment the position x tracker.
  ;   cmp byte[_cursorPositionY], COLUMNS ; Check if we are at the end of the line.
   ;  je .row                         ; If so insert an new line feed.
-    jmp .finished                   ; Else jump to the exit routine.
+    jmp .finished                       ; Else jump to the exit routine.
 
     ;____________ Move to an new line feed ____________
     ; This routine moves the cursor to an new line feed.
     .row:
         mov byte[_cursorPositionX], 0x00; Go back to column 0 on the new line.
-        inc byte[_cursorPositionY]  ; Increment the line number.
+        inc byte[_cursorPositionY]      ; Increment the line number.
 
     ;___________________________ Return ____________________________________
     ; Finished printing, restore the CPU registers and return to the caller.
     .finished:
-        popa                        ; Restore the registers.
-        ret                         ; Return to the caller.
+        popa                            ; Restore the registers.
+        ret                             ; Return to the caller.
 
 ;_________________________________________________________________________________________________________________________/ ϝ printString32
 ;   Description:
@@ -85,32 +99,32 @@ printCharacter32:
 ;   Function Arguments:
 ;   bl      The start address of the string.
 printString32:
-    pusha                           ; Save the CPU registers.
-    push ebx                        ; Copy the string address.
-    pop edi                         ; Get the data index.
+    pusha                               ; Save the CPU registers.
+    push ebx                            ; Copy the string address.
+    pop edi                             ; Get the data index.
 
     ;_____________ Character Loop iteration _______________
     ; Start iterating through each character in the string.
     .characterIteration:
-        mov bl, byte[edi]           ; Get the next character.
-        cmp bl, 0                   ; Does the current character contain an null termination character.
-        je .finished                ; Yes, we are at the end of the string, jump to the return routine.
-        call printCharacter32       ; Else print the character in dl to the screen using the printString function
+        mov bl, byte[edi]               ; Get the next character.
+        cmp bl, ASCII_CRTL_NUL          ; Does the current character contain an null termination character.
+        je .finished                    ; Yes, we are at the end of the string, jump to the return routine.
+        call printCharacter32           ; Else print the character in dl to the screen using the printString function
 
     ;______ Finish the iteration, increment counter _______
     ; Start iterating through each character in the string.
     .next:
-        inc edi                     ; Increment the string index.
-        jmp .characterIteration     ; Iterate over the next character in the string.
+        inc edi                         ; Increment the string index.
+        jmp .characterIteration         ; Iterate over the next character in the string.
 
     ;_______________________________ Update VGA cursor and Return ____________________________________
     ; Update the hardware cursor with VGA, Update the complete string all at once because VGA is slow.
     .finished:
-        mov bh, byte[_cursorPositionY]; Set the high side of the the base register to the y position.
-        mov bl, byte[_cursorPositionX]; Set the low side of the base register to the x position.
-        call moveCursor32           ; Call the function that updates the hardware cursor through VGA.
-        popa                        ; Restore the CPU register.
-        ret                         ; And return to the caller.
+        mov bh, byte[_cursorPositionY]  ; Set the high side of the the base register to the y position.
+        mov bl, byte[_cursorPositionX]  ; Set the low side of the base register to the x position.
+        call moveCursor32               ; Call the function that updates the hardware cursor through VGA.
+        popa                            ; Restore the CPU register.
+        ret                             ; And return to the caller.
 
 ;_________________________________________________________________________________________________________________________/ ϝ moveCursor32
 ;   Description:
@@ -126,35 +140,35 @@ bits 32
 %define VGA_CRT_DATA_REG    0x03D5
 
 moveCursor32:
-    pusha                           ; Save the current register states.
+    pusha                               ; Save the current register states.
 
     ; Get the current position.
-    xor eax, eax                    ; Clear the eax register.
-    mov ecx, COLUMNS                ; Get the number of columns there are in a single line.
-    mov al, bh                      ; Get the Y position that was passed as argument.
-    mul ecx                         ; Multiply Y by the amount of columns.
-    add al, bl                      ; And finally add X to it.
-    mov ebx, eax                    ; Save the value to the Base Register.
+    xor eax, eax                        ; Clear the eax register.
+    mov ecx, COLUMNS                    ; Get the number of columns there are in a single line.
+    mov al, bh                          ; Get the Y position that was passed as argument.
+    mul ecx                             ; Multiply Y by the amount of columns.
+    add al, bl                          ; And finally add X to it.
+    mov ebx, eax                        ; Save the value to the Base Register.
 
     ; Set the cursor low to the VGA CRT register (see CRT table above)
-    mov al, 0x0F                    ; Get the CRT cursor location low address.
-    mov dx, VGA_CRT_INDEX_REG       ; Get the VGA CRT index register address.
-    out dx, al                      ; Write the cursor location low to the CRT index register.
-    mov al, bl                      ; Get the X position that was passed as an argument.
-    mov dx, VGA_CRT_DATA_REG        ; Get the VGA CRT data register address.
-    out dx, al                      ; Write the X position to the to the VGA CRT data register.
+    mov al, 0x0F                        ; Get the CRT cursor location low address.
+    mov dx, VGA_CRT_INDEX_REG           ; Get the VGA CRT index register address.
+    out dx, al                          ; Write the cursor location low to the CRT index register.
+    mov al, bl                          ; Get the X position that was passed as an argument.
+    mov dx, VGA_CRT_DATA_REG            ; Get the VGA CRT data register address.
+    out dx, al                          ; Write the X position to the to the VGA CRT data register.
 
     ; Set the cursor high to the VGA CRT register (see CRT table at the bottom of this file.)
-     mov al, 0x0E                    ; Get the CRT cursor location high address.
-     mov dx, VGA_CRT_INDEX_REG       ; Get the VGA CRT index register address.
-     out dx, al                      ; Write the cursor location low to the CRT index register.
-     mov al, bh                      ; Get the Y position that was passed as an argument.
-     mov dx, VGA_CRT_DATA_REG        ; Get the VGA CRT data register address.
-     out dx, al                      ; Write the Y position to the to the VGA CRT data register.
+     mov al, 0x0E                       ; Get the CRT cursor location high address.
+     mov dx, VGA_CRT_INDEX_REG          ; Get the VGA CRT index register address.
+     out dx, al                         ; Write the cursor location low to the CRT index register.
+     mov al, bh                         ; Get the Y position that was passed as an argument.
+     mov dx, VGA_CRT_DATA_REG           ; Get the VGA CRT data register address.
+     out dx, al                         ; Write the Y position to the to the VGA CRT data register.
 
      ; Return
-     popa                           ; Restore the register states.
-     ret                            ; Return to the caller.
+     popa                               ; Restore the register states.
+     ret                                ; Return to the caller.
 
 
 ;_________________________________________________________________________________________________________________________/ ϝ clearDisplay32

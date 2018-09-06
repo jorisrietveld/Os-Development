@@ -1,0 +1,14 @@
+/**
+ * Author: Joris Rietveld <jorisrietveld@gmail.com>
+ * Date: 09-01-2018 14:30
+ * Licence: GPLv3 - General Public Licence version 3
+ *
+ * Description:
+ * This header file defines the standard integer types for C++.
+ * It simply includes the stdint.h file.
+ */
+#ifndef OS_DEVELOPMENT_CSTDINT
+#define OS_DEVELOPMENT_CSTDINT
+#include <stdint.h>
+
+#endif // OS_DEVELOPMENT_CSTDINT
