@@ -258,7 +258,18 @@ restart_script(){
     go_to_dir "$JORIX_DIR"
     exec "$JORIX_SCRIPT"
 }
-clear
+
+install_figlet_fonts(){
+git clone https://github.com/xero/figlet-fonts.git
+mv figlet-fonts/* /usr/share/figlet/
+_safe_rm "figlet-fonts"
+}
+
+install_fancy_print(){
+    apt install boxes figlet toilet
+}
+
+}clear
 mount_floppy
 
 toilet -t -f 3D-ASCII 'Jorix OS' | boxes -d stark2 -a hc -p h8 | toilet --gay -f term -t
