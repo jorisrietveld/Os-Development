@@ -42,7 +42,7 @@ loadRootDirectory:
     add word[DataSector], cx        ; Add the size of the root directory.
 
     ; Read the root directory into 0x7c00
-    push word ROOT_SEGMENT          ; Push the root segment addess on to the stack.
+    push word ROOT_SEGMENT          ; Push the root segment address on to the stack.
     pop es                          ; Pop the extra segment from the stack.
     xor bx, bx                      ; Set the address to 0
     call readSectors                ; Call the function that copies all sectors from the disk to ram.
@@ -138,7 +138,7 @@ findFile:
 ;
 ;   Function Arguments:
 ;   es:si       An string that contains the file name to search for in the root table.
-;   bx:bp       An buffer to load the file to.
+;   bx:bp       Should point to an buffer to load the file to.
 ;
 ;   Returns:
 ;   ax          The status code, 0 means the file successfully loaded, -1 if there was an error.

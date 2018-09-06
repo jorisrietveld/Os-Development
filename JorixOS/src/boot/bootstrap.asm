@@ -319,7 +319,7 @@ readSectors:
         loop .main                      ; Move ahead to the next sector to read.
         ret                             ; return
 
-;________________________________________________________________________________________________________________________/ ϝ readSectors
+;________________________________________________________________________________________________________________________/ ϝ convertChsToLba
 ;   Description:
 ;   This function converts CHS (Cylinder/Head/Sector) addressing to LBA (Logical Block Addressing).
 ;

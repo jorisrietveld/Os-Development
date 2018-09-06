@@ -51,6 +51,19 @@ NEWLINE db 0x0A, 0x0D, 0                ; Ascii control codes for a newline: Car
     newline_16                          ; After printing the string, move the cursor to the start of a new line.
 %endmacro
 
+;________________________________________________________________________________________________________________________/ ϝ WaitForAnyKey
+;   Description:
+;   Wait until the presses a key. The keyboard buffer will not by cleared after detection, if needed you can fetch the
+;   pressed key and clear the buffer by invoking int 0x16 with 0x00 stored in ah. Afterwards the key will be saved in al.
+;
+WaitForKeyPress:
+    println_16 msg_press_any                ; Ask the user to press "the any key".
+    .wait:
+        mov ah, KEYBOARD_CHECK_KEYSTROKE        ; Set the check key buffer for int 0x16, (Sets ZF if the buffer is empty)
+        int BIOS_INTERRUPT_KEYBOARD             ; Ask the BIOS to check the key buffer.
+        jz .wait                      ; Loop if the buffer is empty.
+        ret                                     ; Waited long enough.
+
 ;_________________________________________________________________________________________________________________________/ ϝ decl_print_16
 ;   Description:
 ;   This function will print a null terminated character array to the screen. This is the underlying assembly code that

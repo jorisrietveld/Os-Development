@@ -38,11 +38,35 @@ jmp main    ; Jump to the main label.
 %include "libs/a20.inc"
 %include "libs/common.inc"
 %include "libs/utils.inc"
-;________________________________________________________________________________________________________________________/ § data section
+%include "libs/global.asm"
+
+;________________________________________________________________________________________________________________________/ § User feedback
+string msg_press_any, "Press any key..."
+string msg_disabled, "disabled"
+string msg_enabled, "enabled"
+
 string msg_gdt, "Installed GDT..."
-string msg_a20, "Enabled the A20 line..."
+
+string msg_a20_status, "The A20 line is: "
+string msg_a20_fatal, "Unable to switch the A20 gate."
+
+string msg_load_root, "Loading the root directory..."
+string msg_kernel_load_fatal, "Unable to load the kernel file."
+
 string msg_switch, "Switching the CPU into protected mode..."
-;________________________________________________________________________________________________________________________/ § text section
+
+;________________________________________________________________________________________________________________________/ ϝ Fatal Error Handler
+;   Description:
+;   This function gets executed when the bootloader encountered a problem that is could not recover from. It loops
+;   endlessly until the user presses a key that will reset the system.
+;
+RebootBecauseOfFailure:
+    println_16 msg_press_any        ; Endless loop until the user decide to reboot.
+    call WaitForKeyPress
+    int BIOS_INTERRUPT_REBOOT           ; Reset the computer and try again.
+    hlt ; Shouldn't get called.
+
+;________________________________________________________________________________________________________________________/ § Stage 2 main code
 ;   Description:
 ;   The second stage of the bootloader, this stage executes after the bootstrap loader is finished preparing the system.
 ;   This section will switch the CPU from real mode to protected mode. It defines the GDT to use and enables the A20 line.
@@ -62,31 +86,62 @@ main:
     call InstallGDT             ; Install the global descriptor table in the GDTR of the CPU.
     println_16 msg_gdt
 
-    ; Enable A20
-    EnableA20:
-        call CheckA20                       ; Check if the A20 gate is already enabled.
-        call enable_a20_bios                ; Try to enable the A20 gate with an BIOS interrupt.
-        call CheckA20                       ; Check if the BIOS interrupt worked.
-        call enable_a20_keyboard            ; No luck, try writing to the keyboard (PC/2) controller.
-        call CheckA20                       ; Check if writing to the keyboard controller worked.
-        call enable_a20_fast                ; Running out of options, try it the dangerous way that can blank the monitor.
-        call CheckA20                       ; Check if writing to the System Control Port worked...
+    ; Attempt to enable the A20 gate so the A20 address line can be used for larger addressing.
+    call CheckA20                       ; Check if the A20 gate is already enabled by the BIOS.
+    call enable_a20_bios                ; Try to enable the A20 gate with an BIOS interrupt.
+    call CheckA20                       ; Check if the BIOS interrupt worked.
+    call enable_a20_keyboard            ; No luck, try writing to the keyboard (PC/2) controller.
+    call CheckA20                       ; Check if writing to the keyboard controller worked.
+    call enable_a20_fast                ; Running out of options, try it the dangerous way that can blank the monitor.
+    call CheckA20                       ; Check if writing to the System Control Port worked...
 
-        ; In your case, switching the A20 gate might involve black magic.
-        .giveUp:
-            ;println_16 msg_fatal            ; Notify the user that the system is unable to boot.
-            jmp stop      ; Halt the processor until this moment.
+    ; In your case, switching the A20 gate might involve black magic.
+    println_16 msg_a20_fatal        ; Notify the user that the system is unable to switch the A20.
+    call RebootBecauseOfFailure     ;
 
+;________________________________________________________________________________________________________________________/ ϝ CheckA20
+;   Description:
+;   This function will check if the A20 gate is enabled. If so it moves on otherwise returnees to the caller.
+;
     CheckA20:
+        print_16 msg_a20_status
         call check_a20                      ; Check if the A20 line is enabled.
         cmp ax, 1                           ; does check_a20 return a one?
-        je enter_stage3                     ; The BIOS enabled it for us, tnx!
+        je .a20_is_enabled
+        println_16 msg_disabled
         ret                                 ; That did'nt work return to the caller.
-    println_16 msg_a20
+
+        .a20_is_enabled:
+            println_16 msg_enabled
+            jmp short LoadKernelImages
+
+    LoadKernelImages:
+        println_16 msg_load_root
+        call loadRootDirectory
+        ; TODO implement a way to search for kernel images.
+        xor ebx, ebx
+        mov bp, IMAGE_REAL_MODE_BASE
+        mov si, KernelNameAsm               ; Set the name of the kernel file.
+        call loadFile                       ; Load the kernel into ram.
+        mov dword [ImageSize], ecx          ; Persist the size of the kernel.
+        cmp ax, 0                           ; Check for errors.
+        je EnterStage3                      ;
+        println_16 msg_kernel_load_fatal    ; Notify the user that the system is unable to switch the A20.
+        call RebootBecauseOfFailure         ;
+
+
+    ; TODO load the root directory
+    ; todo find images.
+    ; todo show menu to choose image
+    ; todo load the selected image to the disk buffer in ram.
+    ; todo save the size of the kernel.
+    ; todo jump to the stage 3 preparations.
+    ; todo
+    call WaitForKeyPress
 
 ;_________________________________________________________________________________________________________________________/ § enter_stage3
 ;   This section will switch the CPU into protected mode and jump the the third stage of the bootloader.
-enter_stage3:
+EnterStage3:
     println_16 msg_switch
     cli                         ; Disable the interrupts because they will tipple fault the CPU in protected mode.
     mov eax, cr0                ; Get the value of the control register and copy it into eax.
