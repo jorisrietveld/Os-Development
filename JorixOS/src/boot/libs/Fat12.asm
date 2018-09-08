@@ -5,24 +5,23 @@
 ;   Description:
 ;   This file contains code for using the File Allocation Table 12 (FAT12) file system that is used on 3.5 floppies.
 ;
-
 %ifndef __FAT12_ASM_INCLUDED__
 %define __FAT12_ASM_INCLUDED__
 bits 16
 
-%include "libs/stdio.asm"
+;%include "libs/stdio.asm"
 %include "libs/Floppy16.asm"
 
-%define     ROOT_OFFSET     0x2E00 ; The location to load the root directory table and FAT.
-%define     FAT_SEGMENT     0x2C0   ; The location to load the fat in the segment registers.
-%define     ROOT_SEGMENT    0x2E0   ; The location to load the root directory in the segment registers.
+%define     ROOT_OFFSET     0x2e00 ; The location to load the root directory table and FAT.
+%define     FAT_SEGMENT     0x2c0   ; The location to load the fat in the segment registers.
+%define     ROOT_SEGMENT    0x2e0   ; The location to load the root directory in the segment registers.
 
 ;________________________________________________________________________________________________________________________/ ϝ loadRootDirectory
 ;   Description:
 ;   This function is responsible for loading the root directory described in the FAT to location 0x7E00. This is the
 ;   the memory address located right above the bootloader code.
 ;
-loadRootDirectory:
+LoadRootDirectory:
     pusha       ; Store all registers.
     push es     ; Make copy of the extra segment.
 
@@ -38,13 +37,14 @@ loadRootDirectory:
     mov al, byte[amountOfFATs]      ; Get the amount of fats on the disk.
     mul word[fatSize]               ; multiply it by the size of each fat.
     add ax, word[reservedSectors]   ; And add the amount of reserved sectors (like the bootloader)
-    mov word[DataSector], ax        ; Store the address of the data sector.
-    add word[DataSector], cx        ; Add the size of the root directory.
+    mov word[dataSector], ax        ; Store the address of the data sector.
+    add word[dataSector], cx        ; Add the size of the root directory.
 
     ; Read the root directory into 0x7c00
     push word ROOT_SEGMENT          ; Push the root segment address on to the stack.
     pop es                          ; Pop the extra segment from the stack.
-    xor bx, bx                      ; Set the address to 0
+    ;xor bx, bx                      ; Set the address to 0
+    mov bx, 0x0
     call readSectors                ; Call the function that copies all sectors from the disk to ram.
     pop es                          ; Remove extra segment from stack.
     popa                            ; Restore all registers.
@@ -111,7 +111,7 @@ findFile:
         pop di                      ; Get the directory index and store it to the stack so we can receive it on match.
         je .found                   ; if each cmpsb matched then the zero flag is set. Else:
         pop cx                      ; Get the root directory index.
-        add di, 0x20                ; Add 32 to the destination index so it contains the next directory entry.
+        add di, 0x20              ; Add 32 to the destination index so it contains the next directory entry.
         loop .checkEntry            ; Do this action until the file is found and if there are entries left to check.
 
     ;_______________________ Return Error ________________________
@@ -121,10 +121,19 @@ findFile:
         pop dx                      ; data and
         pop cx                      ; counter registers from stack.
         mov ax, -1                  ; Then set the return index to -1 which signals an error.
+ ;       mov si, msg_debug
+ ;   .print:
+ ;       lodsb
+ ;       or al, al
+ ;       jz .endOfStr
+ ;       mov ah, 0x0E
+ ;       int 0x10
+ ;       jmp .print
+ ;    .endOfStr:
         ret                         ; Return to the caller.
 
     ;_______________________ Return Success ________________________
-    ; No entry found that matches the file name, return status -1.
+    ;  The entry was found.
     .found:
         pop ax                      ; Get the found directory file index from the stack.
         pop bx                      ; Restore the base,

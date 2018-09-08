@@ -85,4 +85,50 @@ decl_print_16:
     .done:
         ret                             ; Return to the caller.
 
+;
+;print_nummer:
+;    mov bx, ax          ; store a copy in bx
+;    xor dx, dx          ; dx will contain the result
+;    mov cx, 3           ; cx's our counter
+
+;.convert_loop:
+;    mov ax, bx          ; load the number into ax
+;    and ax, 0x0f         ; we want the first 4 bits
+;    cmp ax, 0x9          ; check what we should add
+;    ja  .greater_than_9
+;    add ax, 0x30         ; 0x30 ('0')
+;    jmp .converted
+
+;.greater_than_9:
+;    add ax, 0x61         ; or 0x61 ('a')
+
+;.converted:
+;    xchg    al, ah      ; put a null terminator after it
+;    mov [si], ax        ; (will be overwritten unless this
+;    inc si              ; is the last one)
+
+;    shr bx, 4           ; get the next part
+;    dec cx              ; one less to do
+;    jnz .convert_loop
+
+;    sub di, 4           ; di still points to the target buffer
+;    ret
+;_________________________________________________________________________________________________________________________/ ϝ decl_print_16
+;   Description:
+;   This function will print a character array to the screen located in the source index and of the length loaded into
+;   cx.
+;
+;   Function Arguments:
+;   si      An pointer pointing to the first element of the character array.
+;   cx      n amount of characters to print.
+;
+;print_n_chars:
+;    mov ah,0eh
+;
+;    .repeat:
+;        lodsb
+;        int 10h
+;        loop .repeat
+;    .done:
+;    ret
 %endif ; __UTILS_INC_INCLUDED__

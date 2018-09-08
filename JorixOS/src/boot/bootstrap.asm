@@ -30,7 +30,7 @@
 ;   Created on: 17-12-2017 15:37                                                                                       ;
 ;                                                                                                                      ;
 bits 16                                 ; Configure the assembler to assemble into 16 bit instructions (For 16 bit real-mode)
-
+;org 0x7c0
 jmp short InitBootstrap                 ; Jump to the initiation function that loads the second loader.
 nop                                     ; Padding to align the bios parameter block.
 
@@ -46,7 +46,7 @@ ReservedSectors  	dw 1                ; The amount of sectors that are not part 
 NumberOfFATs  	    db 2                ; The number of file allocate tables on the floppy disk (standard 2 for FAT12)
 RootEntries  	    dw 224              ; The maximum amount of entries in the root directory.
 TotalSectors  	    dw 2880             ; The amount of sectors that are present on the floppy disk.
-Media  	            db 0x0F0            ; Media description settings:
+Media  	            db 0xF0             ; Media description settings:
                                         ; single sided, 9 sectors per FAT, 80 tracks, and not removable
                                         ; Explanation of the bits in the entry:
                                         ; Bit 0: Sides/Heads    = 0 if it is single sided, 1 if its double sided
@@ -61,12 +61,16 @@ HiddenSectors  	    dd 0                ; The amount of sectors between the phys
                                         ; and the start of the volume.
 TotalSectorsBig     dd 0                ; The total amount of lage sectors.
 DriveNumber  	    db 0                ; 0 because this is the standard for floppy disks.
-bsExtBootSignature  db 41               ; The boot signature of: MS/PC-DOS Version 4.0
-bsSerialNumber 	    dd 00000000h        ; This gets overwritten every time the image get written.
-bsVolumeLabel  	    db "JORIX OS   "    ; The label of the volume.
-bsFileSystem  	    db "FAT12   "       ; The type of file system.
+unused              db 0
+bsExtBootSignature  db 0x29             ; The boot signature of: MS/PC-DOS Version 4.0
+bsSerialNumber 	    dd 0xa0a1a2a3       ; This gets overwritten every time the image get written.
+bsVolumeLabel  	    db "MOS FLOPPY "    ; The label of the volume.
+bsFileSystem  	    db "FAT12   "      ; The type of file system.
 
 %include './libs/common.inc'
+
+%define FAT_OFFSET      0x0200          ; Offset to load FAT to.
+
 ;________________________________________________________________________________________________________________________/ § main
 ;   Description:
 ;   This is the entry point of the stage bootloader. It will initiate the memory segments and stack, Then it executes
@@ -75,7 +79,7 @@ bsFileSystem  	    db "FAT12   "       ; The type of file system.
 InitBootstrap:
     ; Set the starting point of the code
     cli             ; Disable all hardware interrupt before moving segments.
-    mov ax, 0x7c0   ; Define the address where the BIOS will load us.
+    mov ax, 0x07c0   ; Define the address where the BIOS will load us.
     mov ds, ax      ; Adjust the data segment to the new location.
     mov es, ax      ; Adjust the extra segment to the new location.
     mov fs, ax      ; Adjust the  segment to the new location.
@@ -86,6 +90,22 @@ InitBootstrap:
     mov ss, ax      ; Adjust the stack segment to the new location.
     mov sp, 0xffff  ; Set the stack pointer to start at 0xffff (grows downwards)
     sti             ; Re-enable the interrupts.
+
+   ; Move cursor at top left position
+    ;mov ah, 0x02
+    ;xor bx, bx
+    ;xor dx, dx
+    ;int 0x10
+;
+    ;; Clear screen
+    ;mov ah, 0x06
+    ;xor al, al
+    ;xor bx, bx
+    ;mov bh, 0x07
+    ;xor cx, cx
+    ;mov dh, 0x18
+    ;mov dl, 0x4f
+    ;int 0x10
 
     ; Greet the user
     mov si, msgLoading
@@ -117,7 +137,7 @@ loadRootDirectory:
                                         ; segments to read.
 
     ; Read the root directory into memory at 7c00:0200 using AX (starting point) and CX (Amount of sectors to read).
-    mov bx, 0x0200                      ; Define the location where the root directory should be loaded to, This is
+    mov bx, FAT_OFFSET                  ; Define the location where the root directory should be loaded to, This is
                                         ; after the boot code (320 bytes)
     call readSectors                    ; Call the function that actually reads sectors into memory.
 
@@ -125,7 +145,7 @@ loadRootDirectory:
     mov cx, word[RootEntries]        ; Initiate the counter with the maximum amount of entries that exist in our root
                                         ; directory. This counter will be decremented until the correct entry is found
                                         ; or if we reach 0, which means that the file doesn't exist.
-    mov di, 0x0200                      ; Set the pointer for comparing the each character in the second stage file name
+    mov di, FAT_OFFSET                  ; Set the pointer for comparing the each character in the second stage file name
                                         ; to the start of the root directory.
 
     ;________________________________________ loopFilename _____________________________________________
@@ -174,7 +194,7 @@ loadFAT:
     ; And calculate the location of the FAT.
     mov ax, word[ReservedSectors]; Adjust the location by adding the boot sector.
     ; Read the FAT into memory at address 7c00:0200
-    mov bx, 0x0200                  ; Set the location to write the fat to.
+    mov bx, FAT_OFFSET                  ; Set the location to write the fat to.
     call readSectors                ; Copy the file allocation table above the boot code at address 7c00:0200
 
     ;mov si, msgNewLine              ; Set the source pointer to the string to print.
@@ -204,7 +224,7 @@ loadImage:
     mov dx, ax                  ; Make a temporary copy to the data register so we can use it in a calculation.
     shr dx, 0x0001              ; Divide by 2 using an logical right shift of 1
     add cx, dx                  ; Sum the values (3/2)
-    mov bx, 0x0200              ; Set the data register to the address of the file allocation table.
+    mov bx, FAT_OFFSET          ; Set the data register to the address of the file allocation table.
     add bx, cx                  ; Add the current index to the FAT base address.
     mov dx, word[bx]            ; Read 2 bytes from the file allocation table.
     test ax, 0x0001             ; Test the bit pattern 0001 on the cluster.
@@ -353,13 +373,10 @@ DataSector      dw 0x0000
 cluster         dw 0x0000
 imageName       db "STAGE2  BIN"
 msgLoading      db "Loading stage2...", 0
-msgNewLine      db 0x0A, 0x0D
+msgNewLine      db 0x0A, 0x0D, 0
 msgProgress     db ".", 0
 msgFailure      db "Error: press any key to destroy your computer."
 
 times 510-($-$$) db 0	; Pad remainder of boot sector with zeros
 dw 0x0AA55		; Bootable flag constant. If this constant is present at address 512 the bios marks the the sector as bootable.
-
-buffer:
-
 

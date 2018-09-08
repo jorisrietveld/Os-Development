@@ -108,5 +108,8 @@ toc:    ;
 	dw end_of_gdt - gdt_data - 1    ; limit, this is the size of the GDT (The ending address - the data -1)
 	dd gdt_data                     ; base of GDT, just the starting address.
 
+%define NULL_DESC 0
+%define CODE_DESC 0x8
+%define DATA_DESC 0x10
 
 %endif ;__GDT_INC_INCLUDED__

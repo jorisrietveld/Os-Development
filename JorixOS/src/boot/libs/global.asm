@@ -10,14 +10,15 @@
 %ifndef __GLOBAL_INC_INCLUDED__
 %define __GLOBAL_INC_INCLUDED__
 
-%define IMAGE_PROTECTED_MODE_BASE 0x100000
+
 %define IMAGE_REAL_MODE_BASE 0x3000
 
-KernelNameAsm db "KRNL_ASMBIN"
-KernelNameC db "KRNL_C  BIN"
-KernelNameCpp db "KRNL_CPPBIN"
+%define IMAGE_PROTECTED_MODE_BASE 0x100000
 
-ImageSize db 0x00
+;KernelNameAsm   db "k_asm   bin"
+ImageName     db "BLOADER2BIN"
+
+ImageSize db 0
 
 
 %endif

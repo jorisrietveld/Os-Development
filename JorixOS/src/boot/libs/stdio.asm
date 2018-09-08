@@ -26,6 +26,9 @@
 ;                                                                                                                      ;
 bits 16
 
+%ifndef __STDIO_INC_INCLUDED__
+%define __STDIO_INC_INCLUDED__
+
 %include "libs/common.inc"
 
 ;_________________________________________________________________________________________________________________________/ § 32 bit IO
@@ -237,6 +240,4 @@ cursorLocation32:
     popa                            ; Restore the CPU registers.
     ret                             ; Return to the caller.
 
-
-
-
+%endif ; __STDIO_INC_INCLUDED__

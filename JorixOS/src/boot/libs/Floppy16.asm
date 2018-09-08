@@ -4,46 +4,45 @@
 ;   
 ;   Description:
 ;   This is an 16 bit floppy disk driver written to control floppy disk drive devices.
+bits 16
 
 %ifndef __FLOPPY16_ASM_INCLUDED__
 %define __FLOPPY16_ASM_INCLUDED__
-bits 16
-
 ;________________________________________________________________________________________________________________________/ § BIOS Parameter Block
 ;   Description:
 ;   The BPB (BIOS Parameter Block) is the data structure that describes the the physical layout of the device.
 ;
-oem                 db "Jorix OS"   ; The name of the OS.
-sectorSize  	    dw 512          ; The amount of bytes in a sector on the floppy disk.
-clusterSize  	    db 1            ; The cluster size.
-reservedSectors     dw 1            ; The amount of sectors that are not part of the FAT12 system.
-amountOfFATs  	    db 2            ; The number of file allocate tables on the floppy disk.
-maxRootEntries      dw 224          ; The maximum amount of entries in the root directory.
-totalSectors  	    dw 2880         ; The amount of sectors that are present on the floppy disk.
-mediaDescriptor     db 0x0F0        ; Media description settings.
-fatSize  	        dw 9            ; The amount of sectors in each FAT entry.
-trackSize  	        dw 18           ; The amount of sectors after each other on the floppy disk.
-sides  	            dw 2            ; The amount of reading heads above each other on the floppy disk.
-hiddenSectors  	    dd 0            ; The amount of sectors between the physical start of the disk and filesystem.
-largeSectors        dd 0            ; The total amount of lage sectors.
-driveNumber  	    db 0            ; 0 because this is the standard for floppy disks.
-unused              db 9
-bootSig  	        db 0x29         ; The boot signature of: MS/PC-DOS Version 4.0
-serial 	            dd 0xa0a1a2a3   ; This gets overwritten every time the image get written.
-volumeLabel  	    db "MOS FLOPPY "; The label of the volume.
-filesystem  	    db "FAT12   "   ; The type of file system.
+oem                 db "Jorix OS"    ; The name of the OS.
+sectorSize  	    dw 512           ; The amount of bytes in a sector on the floppy disk.
+clusterSize  	    db 1             ; The cluster size.
+reservedSectors     dw 1             ; The amount of sectors that are not part of the FAT12 system.
+amountOfFATs  	    db 2             ; The number of file allocate tables on the floppy disk.
+maxRootEntries      dw 224           ; The maximum amount of entries in the root directory.
+totalSectors  	    dw 2880          ; The amount of sectors that are present on the floppy disk.
+mediaDescriptor     db 0x0F0         ; Media description settings.
+fatSize  	        dw 9             ; The amount of sectors in each FAT entry.
+trackSize  	        dw 18            ; The amount of sectors after each other on the floppy disk.
+sides  	            dw 2             ; The amount of reading heads above each other on the floppy disk.
+hiddenSectors  	    dd 0             ; The amount of sectors between the physical start of the disk and filesystem.
+largeSectors        dd 0             ; The total amount of lage sectors.
+driveNumber  	    db 0             ; 0 because this is the standard for floppy disks.
+unused              db 0
+bootSig             db 0x29
+serial  	        dd 0xa0a1a2a3     ; The boot signature of: MS/PC-DOS Version 4.0
+volumeLabel         db "MOS FLOPPY " ; This gets overwritten every time the image get written.
+filesystem  	    db "FAT12   "    ; The label of the volume.
 
 ;________________________________________________________________________________________________________________________/ § Variables
 ;   Description:
 ;   Some global variables and compiler macros.
 ;
-DataSector  dw 0x0000   ; data sector.
+dataSector  dw 0x0000   ; data sector.
 cluster     dw 0x0000   ; cluster.
 absoluteSector db 0x00  ; Data sector in CHS (Cylinder Head Sector) addressing.
 absoluteHead   db 0x00  ; Head in CHS (Cylinder Head Sector) addressing.
 absoluteTrack  db 0x00  ; Track in CHS (Cylinder Head Sector) addressing.
 
-%include 'libs/Common.asm'
+%include 'libs/common.inc'
 
 ;________________________________________________________________________________________________________________________/ ϝ convertCHStoLBA
 ;   Description:
@@ -57,7 +56,7 @@ convertCHStoLBA:
     xor cx, cx                  ; Clear the counter
     mov cl, byte[clusterSize]   ; Get the amount of sectors in a cluster.
     mul cx                      ; Multiply the cluster number minus 2 by the amount of sectors.
-    add ax, word[DataSector]    ; And add the data sector offset to it.
+    add ax, word[dataSector]    ; And add the data sector offset to it.
     ret
 
 ;________________________________________________________________________________________________________________________/ ϝ convertLBAtoCHS
@@ -109,18 +108,18 @@ readSectors:
         mov cl, byte[absoluteSector]    ; Set the sector
         mov dh, byte[absoluteHead]      ; Set the head
         mov dl, byte[driveNumber]       ; Set the drive to use.
-        int BIOS_INT_DISK               ; Use the BIOS interrupt to read 1 sector
+        int BIOS_INTERRUPT_DISK               ; Use the BIOS interrupt to read 1 sector
         jnc .finished                   ; Check if there were no errors. (the BIOS will set the carry flag on error)
 
         ; Error reading the sector
         xor ax, ax                      ; Clear ax, 0x0 is the bios reset disk instruction.
-        int BIOS_INT_DISK               ; Execute the reset disk using the BIOS interrupt.
+        int BIOS_INTERRUPT_DISK               ; Execute the reset disk using the BIOS interrupt.
         dec di                          ; Reading the sector failed so subtract 1 from the maximum retry amount.
         pop cx
         pop bx
         pop ax
         jnz .readSector                 ; If the retry amount is above 0 try reading the sector again.
-        int BIOS_INT_REBOOT             ; It failed 5 times... reboot the system.
+        int BIOS_INTERRUPT_REBOOT             ; It failed 5 times... reboot the system.
     ;______________________________________ Read success _________________________________________
     ; Convert the address to chs and execute interrupt 0x13 to load n(cx) amount of sectors from the disk.
     .finished:

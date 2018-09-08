@@ -13,6 +13,5 @@
 %include 'libs/bios.inc'
 %include 'libs/types.inc'
 %include 'libs/ps2.inc'
-%include 'libs/jorix_debug.inc'
 
 %endif ; __COMM_INC_INCLUDED__

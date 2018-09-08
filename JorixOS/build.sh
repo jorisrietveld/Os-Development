@@ -73,7 +73,7 @@ JORIX_SCRIPT="$0"
 # Generated binaries and images by the script
 : ${BOOTSTRAP_OUT:="${BOOTSTRAP_BASE}.bin"}     # The bootstrap binary, gets copied in the first sector of the image.
 : ${BOOTLOADER_OUT:="${BOOTLOADER_BASE}.bin"}   # The second stage, gets copied on the FAT12's root directory.
-: ${KERNEL_ASM_OUT:="${KERNEL_ASM_BASE}.sys"}               # The kernel written is asm also stored on the root directory.
+: ${KERNEL_ASM_OUT:="bloader2.bin"}   # The kernel written is asm also stored on the root directory.
 : ${FLOPPY_IMAGE_OUT:="${DISK_IMAGE_BASE}.flp"} # The name of bootable floppy image.
 : ${CD_ISO_IMAGE_OUT:="${DISK_IMAGE_BASE}.iso"} # The name of bootable cd disk image converted from the floppy.
 
@@ -101,7 +101,7 @@ JORIX_SCRIPT="$0"
 # 0 - Nothing, use this for debugging.
 # 1 - Minimal, not so useful.
 # 2 - Multipass, use this in production code.
-: ${NASM_OPTIMIZE:=0}
+: ${NASM_OPTIMIZE:=2}
 
 # Disables the question
 : ${DISABLE_QUESTION:=0}
@@ -269,8 +269,7 @@ install_fancy_print(){
     apt install boxes figlet toilet
 }
 
-}clear
-mount_floppy
+#mount_floppy
 
 toilet -t -f 3D-ASCII 'Jorix OS' | boxes -d stark2 -a hc -p h8 | toilet --gay -f term -t
 hr ".:" && print_center "Written By Joris Rietveld" && print_center "https://github.com/jorisrietveld" && hr
