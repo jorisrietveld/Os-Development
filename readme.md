@@ -1,6 +1,6 @@
 # JorixOS
  This is my first attempt at creating an simple Operating System for educational purposes. I want to learn more about
- the fundamental concepts of computing technology, because of this I am doing several projects like writing an
+ the fundamental concepts of computing, because of this I am doing several projects like writing an
  interpreter, compiler, web server, filesystem, this project and creating my own 8-bit computer composed of manny
  ttl chips, breadboards and _(an unnecessary amount to make it look more complicated)_ LED's.
 
