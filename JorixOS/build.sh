@@ -49,7 +49,7 @@ JORIX_DIR="$(pwd)"
 JORIX_SCRIPT="$0"
 #________________________________________________________________________________________________________________________/ Options
 # File privileges for the generated files.
-: ${OUTPUT_PRIVILEGE_USER:="joris"}             # Replace this with your normal username or leave empty for auto detect.
+: ${OUTPUT_PRIVILEGE_USER:="neon2019"}             # Replace this with your normal username or leave empty for auto detect.
 : ${OUTPUT_PRIVILEGE_LEVEL:="777"}              # File privileges on compiled binaries, 777 is bad
 
 # Quick settings, you can also specify them from the shell like: QUICK_BR=1 ./build.sh this will override
@@ -229,7 +229,9 @@ assemble_file(){
         exit 1
     fi
     notify_status "Assembling file: ${1}..."
-    nasm -Xgnu -O${NASM_OPTIMIZE}v -w+orphan-labels -f bin -o ${2} "${1}" 2>&1 | extra_debug || exit 1
+    echo "Trying to assemble this: ${1} ${2}"
+    echo "nasm -Xgnu -O${NASM_OPTIMIZE} -w+orphan-labels -f bin -o ${2} "${1}" 2>&1 | extra_debug || exit 1"
+    nasm -Xgnu -O${NASM_OPTIMIZE} -w+orphan-labels -f bin -o "${2}" "${1}" || exit 1
     fix_file_permissions "${2}"
     notify_success "successfully successfully assembled: ${2}"
 }
@@ -269,7 +271,7 @@ install_fancy_print(){
     apt install boxes figlet toilet
 }
 
-}clear
+clear
 mount_floppy
 
 toilet -t -f 3D-ASCII 'Jorix OS' | boxes -d stark2 -a hc -p h8 | toilet --gay -f term -t

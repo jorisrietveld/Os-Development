@@ -348,7 +348,7 @@ convertChsToLba:
 ;   Function Arguments:
 ;   ax      The LBA address that needs to be converted to CHS.
 ;
-convertLbaToChs:BIOS_INTERRUPT_DISK
+convertLbaToChs:
     xor dx, dx                          ; Clear dx
     div word[SectorsPerTrack]        ; Divide LBA by sectorPerTrack (the remainder is stored in dx).
     inc dl                              ; Add 1 to the modulus of LBA
